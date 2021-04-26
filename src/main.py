@@ -1,4 +1,4 @@
-from mapfmclient import Solution, MapfBenchmarker
+from mapfmclient import Solution, MapfBenchmarker, MarkedLocation
 from src.astar.astar import AStar, Problem
 import subprocess
 
@@ -17,7 +17,8 @@ if __name__ == '__main__':
     version = '0.0.1'
     debug=True
     api_token = open('../apitoken.txt', 'r').read().strip()
-    benchmarker = MapfBenchmarker(api_token, 1, "A*", get_version(debug, version), debug, solver=solve, cores=1)
+    benchmarker = MapfBenchmarker(api_token, 2, "A*", get_version(debug, version), debug, solver=solve, cores=1)
     benchmarker.run()
+
 
 

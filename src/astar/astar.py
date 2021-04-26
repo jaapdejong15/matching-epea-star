@@ -78,13 +78,11 @@ class MatchingProblem:
         coords = set()
         for agent in state.agents:
             if agent.coord in coords:
-                print("Vertex conflict")
                 return False # Vertex conflict
             for ml in self.goals:
                 if ml.x == agent.coord.x and ml.y == agent.coord.y and ml.color == agent.color:
                     break
             else:
-                print(f"Agent with position ({agent.coord.x}, {agent.coord.y}) not on goal ({self.goals[0].x},{self.goals[0].y})")
                 return False
         return True
 
@@ -143,15 +141,13 @@ def get_path(node: Node) -> List[Node]:
     return path
 
 def convert_path(nodes: List[Node]):
-    solution = Solution()
     paths = []
     for i, agent in enumerate(nodes[0].state.agents):
         path = []
         for node in nodes:
             path.append((node.state.agents[i].coord.x, node.state.agents[i].coord.y))
         paths.append(path)
-    solution.from_paths(paths)
-    return solution
+    return Solution.from_paths(paths)
 
 class AStar:
 
