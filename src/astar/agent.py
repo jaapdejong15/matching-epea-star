@@ -6,9 +6,6 @@ class Agent:
         self.color = color
         self.waiting_cost = waiting_cost # Counter for potential costs if agent moves of its goal
 
-    def move(self, direction : Direction):
-        return self.coord.move(direction)
-
     def __eq__(self, other):
         return self.coord == other.coord and self.color == other.color
 

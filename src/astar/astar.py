@@ -1,7 +1,7 @@
 import itertools
 
 from mapfmclient import Problem, Solution, MarkedLocation
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from src.astar.agent import Agent
 from src.util.coordinate import Coordinate, Direction
 from heapq import heappush, heappop
@@ -36,16 +36,16 @@ class Grid:
         self.height = height
         self.grid = grid
 
-    def __is_wall(self, pos: Coordinate):
-        return self.grid[pos.y][pos.x]
+    def __is_wall(self, pos: Coordinate) -> bool:
+        return self.grid[pos.y][pos.x] == 1
 
-    def traversable(self, pos: Coordinate):
+    def traversable(self, pos: Coordinate) -> bool:
         return 0 <= pos.x < self.width and 0 <= pos.y < self.height and not self.__is_wall(pos)
 
-    def get_neighbors(self, pos: Coordinate):
+    def get_neighbors(self, pos: Coordinate) -> List[Coordinate]:
         neighbors = []
-        for d in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
-            neighbor = pos.move(d)
+        for direction in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
+            neighbor = pos.move(direction)
             if self.traversable(neighbor):
                 neighbors.append(neighbor)
         return neighbors
@@ -75,27 +75,17 @@ class MatchingProblem:
         return heuristic
 
     def is_solved(self, state) -> bool:
-        coords = set()
-        for agent in state.agents:
-            if agent.coord in coords:
-                return False # Vertex conflict
-            for ml in self.goals:
-                if ml.x == agent.coord.x and ml.y == agent.coord.y and ml.color == agent.color:
-                    break
-            else:
-                return False
-        return True
+        return all(self.on_goal(agent) for agent in state.agents)
 
-
+    # TODO: Expand states instead of nodes
     def expand(self, node: Node) -> List[Node]:
         agents_moves = []
         for agent in node.state.agents:
-            # TODO: Add waiting cost?
-            possible_moves = [(Agent(neighbor, agent.color), 1) for neighbor in self.grid.get_neighbors(agent.coord)]
+            possible_moves = [(Agent(neighbor, agent.color), 1 + agent.waiting_cost) for neighbor in self.grid.get_neighbors(agent.coord)]
             if self.on_goal(agent):
                 possible_moves.append((Agent(agent.coord, agent.color, agent.waiting_cost + 1), 0))
             else:
-                possible_moves.append((Agent(agent.coord, agent.color, 0), 1))
+                possible_moves.append((Agent(agent.coord, agent.color), 1 + agent.waiting_cost))
             agents_moves.append(possible_moves)
 
         possible_states = itertools.product(*agents_moves)
@@ -114,8 +104,8 @@ class MatchingProblem:
                 coords.add(agent.coord)
 
                 # Check edge conflicts
-                for j, old_agent in enumerate(node.state.agents):
-                    if i != j and agent.coord == old_agent.coord and state[j][0] == node.state.agents[i]:
+                for j in range(i + 1, len(node.state.agents)):
+                    if state[i][0].coord == node.state.agents[j].coord and state[j][0].coord == node.state.agents[i].coord:
                         edge_conflict = True
                         break
                 if edge_conflict:
@@ -123,6 +113,7 @@ class MatchingProblem:
 
             if (not vertex_conflict) and (not edge_conflict):
                 agents = []
+                # TODO: Check if parent is changed
                 cost = node.cost
                 for agent, added_cost in state:
                     agents.append(agent)
@@ -154,7 +145,7 @@ class AStar:
     def __init__(self, problem: Problem):
         self.problem = MatchingProblem(problem)
         initial_state = State(self.problem.agents)
-        self.initial_node = Node(initial_state, 0, self.problem.heuristic(initial_state))
+        self.initial_node = Node(initial_state, len(self.problem.agents), self.problem.heuristic(initial_state))
 
     def solve(self) -> Optional[Solution]:
         frontier = []
