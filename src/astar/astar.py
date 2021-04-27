@@ -1,20 +1,8 @@
-import itertools
-
-from mapfmclient import Problem, Solution, MarkedLocation
-from typing import List, Optional, Tuple
-from src.astar.agent import Agent
-from src.util.coordinate import Coordinate, Direction
+from mapfmclient import Problem, Solution
+from typing import List, Optional
 from heapq import heappush, heappop
 
-class State:
-    def __init__(self, agents: List[Agent]):
-        self.agents = tuple(agents)
-
-    def __eq__(self, other):
-        return self.agents == other.agents
-
-    def __hash__(self):
-        return hash(self.agents)
+from src.astar.matching_problem import State, MatchingProblem
 
 class Node:
 
@@ -22,105 +10,14 @@ class Node:
         self.state = state
         self.cost = cost
         self.heuristic = heuristic
+        self.value = cost + heuristic
         self.parent = parent
 
     def __eq__(self, other):
-        return self.cost + self.heuristic == other.cost + other.heuristic
+        return self.value == other.value
 
     def __lt__(self, other):
-        return self.cost + self.heuristic < other.cost + other.heuristic
-
-class Grid:
-    def __init__(self, width: int, height: int, grid: List[List[int]]):
-        self.width = width
-        self.height = height
-        self.grid = grid
-
-    def __is_wall(self, pos: Coordinate) -> bool:
-        return self.grid[pos.y][pos.x] == 1
-
-    def traversable(self, pos: Coordinate) -> bool:
-        return 0 <= pos.x < self.width and 0 <= pos.y < self.height and not self.__is_wall(pos)
-
-    def get_neighbors(self, pos: Coordinate) -> List[Coordinate]:
-        neighbors = []
-        for direction in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
-            neighbor = pos.move(direction)
-            if self.traversable(neighbor):
-                neighbors.append(neighbor)
-        return neighbors
-
-class MatchingProblem:
-
-    def __init__(self, original: Problem):
-        self.agents = [Agent(Coordinate(s.x, s.y), s.color) for s in original.starts]
-        self.grid = Grid(original.width, original.height, original.grid)
-        self.goals = original.goals
-
-    def on_goal(self, agent: Agent) -> bool:
-        for goal in self.goals:
-            if goal.x == agent.coord.x and goal.y == agent.coord.y and goal.color == agent.color:
-                return True
-        return False
-
-    def heuristic(self, state: State) -> int:
-        # Sum of distance to closest goal of same color for each agent
-        heuristic = 0
-        for agent in state.agents:
-            goal_distance = float('inf')
-            for goal in self.goals:
-                if goal.color == agent.color:
-                    goal_distance = min(goal_distance, abs(agent.coord.x - goal.x) + abs(agent.coord.y - goal.y))
-            heuristic += goal_distance
-        return heuristic
-
-    def is_solved(self, state) -> bool:
-        return all(self.on_goal(agent) for agent in state.agents)
-
-    # TODO: Expand states instead of nodes
-    def expand(self, state: State) -> List[Tuple[State, int]]:
-        agents_moves = []
-        for agent in state.agents:
-            agent_moves = [(Agent(neighbor, agent.color), 1 + agent.waiting_cost) for neighbor in self.grid.get_neighbors(agent.coord)]
-            if self.on_goal(agent):
-                agent_moves.append((Agent(agent.coord, agent.color, agent.waiting_cost + 1), 0))
-            else:
-                agent_moves.append((Agent(agent.coord, agent.color), 1 + agent.waiting_cost))
-            agents_moves.append(agent_moves)
-
-        possible_moves = itertools.product(*agents_moves)
-
-        # Check constraints
-        states = []
-        for move in possible_moves:
-            coords = set()
-            edge_conflict = False
-            vertex_conflict = False
-            for i, (agent, cost) in enumerate(move):
-                # Check vertex conflict
-                if agent.coord in coords:
-                    vertex_conflict = True
-                    break
-                coords.add(agent.coord)
-
-                # Check edge conflicts
-                for j in range(i + 1, len(state.agents)):
-                    if move[i][0].coord == state.agents[j].coord and move[j][0].coord == state.agents[i].coord:
-                        edge_conflict = True
-                        break
-                if edge_conflict:
-                    break
-
-            if (not vertex_conflict) and (not edge_conflict):
-                agents = []
-                added_cost = 0
-                for agent, agent_cost in move:
-                    agents.append(agent)
-                    added_cost += agent_cost
-                move = State(agents)
-                states.append((move, added_cost))
-        return states
-
+        return self.value < other.value
 
 def get_path(node: Node) -> List[Node]:
     path = []
@@ -139,7 +36,7 @@ def convert_path(nodes: List[Node]):
         paths.append(path)
     return Solution.from_paths(paths)
 
-class AStar:
+class PEAStar:
 
     def __init__(self, problem: Problem):
         self.problem = MatchingProblem(problem)
@@ -160,8 +57,24 @@ class AStar:
                 return convert_path(get_path(node))
 
             children = self.problem.expand(node.state)
+            child_not_added = False
+            min_value = float('inf') # Lowest f(n) of the unopened children, set as new value for parent node
             for (state, added_cost) in children:
                 if state not in seen:
-                    child_node = Node(state, node.cost + added_cost, self.problem.heuristic(state), parent=node)
-                    heappush(frontier, child_node)
+                    heuristic = self.problem.heuristic(state)
+                    child_cost = node.cost + added_cost
+                    child_value = child_cost + heuristic # f(n_c)
+                    if child_value == node.value: # For an admissible heuristic, the child value cannot be lower than the parent value
+                        child_node = Node(state, child_cost, heuristic, parent=node)
+                        heappush(frontier, child_node)
+                    else:
+                        child_not_added = True
+                        min_value = min(min_value, child_value)
+
+            # If a child was not added
+            if child_not_added:
+                # Set node value to the lowest value of the unopened children and put in frontier
+                node.value = min_value
+                heappush(frontier, node)
+
         return None
