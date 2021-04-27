@@ -36,6 +36,7 @@ def convert_path(nodes: List[Node]):
         paths.append(path)
     return Solution.from_paths(paths)
 
+
 class PEAStar:
 
     def __init__(self, problem: Problem):
@@ -46,12 +47,13 @@ class PEAStar:
     def solve(self) -> Optional[Solution]:
         frontier = []
         seen = set() # Avoid doing the same nodes over and over again
+        fully_expanded = set()
         heappush(frontier, self.initial_node)
 
         while frontier:
             node = heappop(frontier)
             # TODO: Remove redundant check?
-            if node.state in seen:
+            if node.state in fully_expanded:
                 continue
             if self.problem.is_solved(node.state):
                 return convert_path(get_path(node))
@@ -77,6 +79,7 @@ class PEAStar:
                 node.value = min_value
                 heappush(frontier, node)
             else:
-                seen.add(node.state)
+                fully_expanded.add(node.state)
+            seen.add(node.state)
 
         return None
