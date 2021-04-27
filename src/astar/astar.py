@@ -50,9 +50,9 @@ class PEAStar:
 
         while frontier:
             node = heappop(frontier)
+            # TODO: Remove redundant check?
             if node.state in seen:
                 continue
-            seen.add(node.state)
             if self.problem.is_solved(node.state):
                 return convert_path(get_path(node))
 
@@ -60,7 +60,7 @@ class PEAStar:
             child_not_added = False
             min_value = float('inf') # Lowest f(n) of the unopened children, set as new value for parent node
             for (state, added_cost) in children:
-                if state not in seen:
+                if state not in seen and state != node.state:
                     heuristic = self.problem.heuristic(state)
                     child_cost = node.cost + added_cost
                     child_value = child_cost + heuristic # f(n_c)
@@ -76,5 +76,7 @@ class PEAStar:
                 # Set node value to the lowest value of the unopened children and put in frontier
                 node.value = min_value
                 heappush(frontier, node)
+            else:
+                seen.add(node.state)
 
         return None
