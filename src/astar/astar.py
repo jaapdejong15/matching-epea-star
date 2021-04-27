@@ -78,25 +78,25 @@ class MatchingProblem:
         return all(self.on_goal(agent) for agent in state.agents)
 
     # TODO: Expand states instead of nodes
-    def expand(self, node: Node) -> List[Node]:
+    def expand(self, state: State) -> List[Tuple[State, int]]:
         agents_moves = []
-        for agent in node.state.agents:
-            possible_moves = [(Agent(neighbor, agent.color), 1 + agent.waiting_cost) for neighbor in self.grid.get_neighbors(agent.coord)]
+        for agent in state.agents:
+            agent_moves = [(Agent(neighbor, agent.color), 1 + agent.waiting_cost) for neighbor in self.grid.get_neighbors(agent.coord)]
             if self.on_goal(agent):
-                possible_moves.append((Agent(agent.coord, agent.color, agent.waiting_cost + 1), 0))
+                agent_moves.append((Agent(agent.coord, agent.color, agent.waiting_cost + 1), 0))
             else:
-                possible_moves.append((Agent(agent.coord, agent.color), 1 + agent.waiting_cost))
-            agents_moves.append(possible_moves)
+                agent_moves.append((Agent(agent.coord, agent.color), 1 + agent.waiting_cost))
+            agents_moves.append(agent_moves)
 
-        possible_states = itertools.product(*agents_moves)
+        possible_moves = itertools.product(*agents_moves)
 
         # Check constraints
-        nodes = []
-        for state in possible_states:
+        states = []
+        for move in possible_moves:
             coords = set()
             edge_conflict = False
             vertex_conflict = False
-            for i, (agent, cost) in enumerate(state):
+            for i, (agent, cost) in enumerate(move):
                 # Check vertex conflict
                 if agent.coord in coords:
                     vertex_conflict = True
@@ -104,8 +104,8 @@ class MatchingProblem:
                 coords.add(agent.coord)
 
                 # Check edge conflicts
-                for j in range(i + 1, len(node.state.agents)):
-                    if state[i][0].coord == node.state.agents[j].coord and state[j][0].coord == node.state.agents[i].coord:
+                for j in range(i + 1, len(state.agents)):
+                    if move[i][0].coord == state.agents[j].coord and move[j][0].coord == state.agents[i].coord:
                         edge_conflict = True
                         break
                 if edge_conflict:
@@ -113,14 +113,13 @@ class MatchingProblem:
 
             if (not vertex_conflict) and (not edge_conflict):
                 agents = []
-                # TODO: Check if parent is changed
-                cost = node.cost
-                for agent, added_cost in state:
+                added_cost = 0
+                for agent, agent_cost in move:
                     agents.append(agent)
-                    cost += added_cost
-                state = State(agents)
-                nodes.append(Node(state, cost, self.heuristic(state), parent=node))
-        return nodes
+                    added_cost += agent_cost
+                move = State(agents)
+                states.append((move, added_cost))
+        return states
 
 
 def get_path(node: Node) -> List[Node]:
@@ -160,8 +159,9 @@ class AStar:
             if self.problem.is_solved(node.state):
                 return convert_path(get_path(node))
 
-            children = self.problem.expand(node)
-            for child in children:
-                if child.state not in seen:
-                    heappush(frontier, child)
+            children = self.problem.expand(node.state)
+            for (state, added_cost) in children:
+                if state not in seen:
+                    child_node = Node(state, node.cost + added_cost, self.problem.heuristic(state), parent=node)
+                    heappush(frontier, child_node)
         return None
