@@ -1,28 +1,15 @@
-from mapfmclient import Problem
 from typing import List, Tuple
+from src.astar.state import State
+from src.astar.agent import Agent
+from src.util.grid import Grid
 import itertools
 
-from src.astar.agent import Agent
-from src.util.coordinate import Coordinate
-from src.util.grid import Grid
 
-
-class State:
-    def __init__(self, agents: List[Agent]):
-        self.agents = tuple(agents)
-
-    def __eq__(self, other):
-        return self.agents == other.agents
-
-    def __hash__(self):
-        return hash(self.agents)
-
-class MatchingProblem:
-
-    def __init__(self, original: Problem):
-        self.agents = [Agent(Coordinate(s.x, s.y), s.color) for s in original.starts]
-        self.grid = Grid(original.width, original.height, original.grid)
-        self.goals = original.goals
+class MAPFProblem:
+    def __init__(self, agents: List[Agent], grid: Grid, goals):
+        self.agents = agents
+        self.grid = grid
+        self.goals = goals
 
     def on_goal(self, agent: Agent) -> bool:
         for goal in self.goals:
@@ -31,14 +18,18 @@ class MatchingProblem:
         return False
 
     def heuristic(self, state: State) -> int:
-        # Sum of distance to closest goal of same color for each agent
         heuristic = 0
-        for agent in state.agents:
-            goal_distance = float('inf')
-            for goal in self.goals:
-                if goal.color == agent.color:
-                    goal_distance = min(goal_distance, abs(agent.coord.x - goal.x) + abs(agent.coord.y - goal.y))
-            heuristic += goal_distance
+        if self.grid.calculate_heuristic:
+            for agent in state.agents:
+                heuristic += self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
+        else:
+            # Sum of distance to closest goal of same color for each agent
+            for agent in state.agents:
+                goal_distance = float('inf')
+                for goal in self.goals:
+                    if goal.color == agent.color:
+                        goal_distance = min(goal_distance, abs(agent.coord.x - goal.x) + abs(agent.coord.y - goal.y))
+                heuristic += goal_distance
         return heuristic
 
     def is_solved(self, state) -> bool:

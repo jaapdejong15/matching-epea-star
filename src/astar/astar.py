@@ -2,7 +2,9 @@ from mapfmclient import Problem, Solution
 from typing import List, Optional
 from heapq import heappush, heappop
 
-from src.astar.matching_problem import State, MatchingProblem
+from src.problem.matching_problem import MatchingProblem
+from src.problem.standard_problem import StandardProblem
+from src.astar.state import State
 
 class Node:
 
@@ -44,8 +46,9 @@ class PEAStar:
                  C = 0: Maximum memory savings
                  C = infinity: No memory savings, normal A*
     """
-    def __init__(self, problem: Problem, memory_constant: int = 0):
-        self.problem = MatchingProblem(problem)
+    def __init__(self, problem: Problem, memory_constant: int = 0, pre_compute_heuristics = False):
+
+        self.problem = StandardProblem(problem, compute_heuristic=pre_compute_heuristics)
         self.memory_constant = memory_constant
         initial_state = State(self.problem.agents)
         self.initial_node = Node(initial_state, len(self.problem.agents), self.problem.heuristic(initial_state))

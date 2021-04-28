@@ -1,0 +1,12 @@
+from typing import List
+from src.astar.agent import Agent
+
+class State:
+    def __init__(self, agents: List[Agent]):
+        self.agents = tuple(agents)
+
+    def __eq__(self, other):
+        return self.agents == other.agents
+
+    def __hash__(self):
+        return hash(self.agents)
