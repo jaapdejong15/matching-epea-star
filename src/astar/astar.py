@@ -73,7 +73,7 @@ class PEAStar:
                     child_value = child_cost + heuristic # child cost
 
                     # For an admissible heuristic, the child value cannot be lower than the parent value
-                    if child_value <= node.value + self.memory_tradeoff:
+                    if child_value <= node.value + self.memory_constant:
                         child_node = Node(state, child_cost, heuristic, parent=node)
                         heappush(frontier, child_node)
                     else:
