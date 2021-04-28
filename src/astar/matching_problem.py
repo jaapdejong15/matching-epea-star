@@ -44,7 +44,6 @@ class MatchingProblem:
     def is_solved(self, state) -> bool:
         return all(self.on_goal(agent) for agent in state.agents)
 
-    # TODO: Expand states instead of nodes
     def expand(self, state: State) -> List[Tuple[State, int]]:
         agents_moves = []
         for agent in state.agents:

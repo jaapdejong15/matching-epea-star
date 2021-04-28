@@ -46,13 +46,12 @@ class PEAStar:
 
     def solve(self) -> Optional[Solution]:
         frontier = []
-        seen = set() # Avoid doing the same nodes over and over again
-        fully_expanded = set()
+        seen = set() # Avoid re-adding states that already have been expanded at least once
+        fully_expanded = set() # Avoid evaluating states that have been fully expanded already
         heappush(frontier, self.initial_node)
 
         while frontier:
             node = heappop(frontier)
-            # TODO: Remove redundant check?
             if node.state in fully_expanded:
                 continue
             if self.problem.is_solved(node.state):
@@ -60,12 +59,12 @@ class PEAStar:
 
             children = self.problem.expand(node.state)
             child_not_added = False
-            min_value = float('inf') # Lowest f(n) of the unopened children, set as new value for parent node
+            min_value = float('inf') # Lowest cost of the unopened children, used as new value for parent node
             for (state, added_cost) in children:
                 if state not in seen and state != node.state:
                     heuristic = self.problem.heuristic(state)
                     child_cost = node.cost + added_cost
-                    child_value = child_cost + heuristic # f(n_c)
+                    child_value = child_cost + heuristic # child cost
                     if child_value == node.value: # For an admissible heuristic, the child value cannot be lower than the parent value
                         child_node = Node(state, child_cost, heuristic, parent=node)
                         heappush(frontier, child_node)
