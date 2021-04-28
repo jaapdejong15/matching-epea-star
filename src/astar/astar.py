@@ -38,9 +38,15 @@ def convert_path(nodes: List[Node]):
 
 
 class PEAStar:
-
-    def __init__(self, problem: Problem):
+    """
+    :param problem: The problem instance that will be solved
+    :param memory_constant: Determines the amount of memory savings in exchange for runtime. Also called C.
+                 C = 0: Maximum memory savings
+                 C = infinity: No memory savings, normal A*
+    """
+    def __init__(self, problem: Problem, memory_constant: int = 0):
         self.problem = MatchingProblem(problem)
+        self.memory_constant = memory_constant
         initial_state = State(self.problem.agents)
         self.initial_node = Node(initial_state, len(self.problem.agents), self.problem.heuristic(initial_state))
 
@@ -65,7 +71,9 @@ class PEAStar:
                     heuristic = self.problem.heuristic(state)
                     child_cost = node.cost + added_cost
                     child_value = child_cost + heuristic # child cost
-                    if child_value == node.value: # For an admissible heuristic, the child value cannot be lower than the parent value
+
+                    # For an admissible heuristic, the child value cannot be lower than the parent value
+                    if child_value <= node.value + self.memory_tradeoff:
                         child_node = Node(state, child_cost, heuristic, parent=node)
                         heappush(frontier, child_node)
                     else:
