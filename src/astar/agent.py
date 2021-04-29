@@ -1,10 +1,11 @@
-from src.util.coordinate import Direction, Coordinate
+from src.util.coordinate import Coordinate
+
 
 class Agent:
-    def __init__(self, coord : Coordinate, color, waiting_cost=0):
+    def __init__(self, coord: Coordinate, color, waiting_cost=0):
         self.coord = coord
         self.color = color
-        self.waiting_cost = waiting_cost # Counter for potential costs if agent moves of its goal
+        self.waiting_cost = waiting_cost  # Counter for potential costs if agent moves of its goal
 
     def __eq__(self, other):
         return self.coord == other.coord and self.color == other.color

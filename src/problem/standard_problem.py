@@ -1,9 +1,10 @@
 from mapfmclient import Problem
 
 from src.astar.agent import Agent
+from src.problem.mapf_problem import MAPFProblem
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid
-from src.problem.mapf_problem import MAPFProblem
+
 
 # Takes the first matching it can find
 class StandardProblem(MAPFProblem):

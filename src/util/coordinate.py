@@ -1,12 +1,14 @@
 from enum import Enum
 
-class Direction (Enum):
+
+class Direction(Enum):
     # (dx, dy)
     NORTH = (0, 1)
-    EAST = (1,0)
+    EAST = (1, 0)
     SOUTH = (0, -1)
     WEST = (-1, 0)
-    WAIT = (0,0)
+    WAIT = (0, 0)
+
 
 class Coordinate:
 
@@ -14,7 +16,7 @@ class Coordinate:
         self.x = x
         self.y = y
 
-    def move(self, d : Direction):
+    def move(self, d: Direction):
         dx, dy = d.value
         return Coordinate(self.x + dx, self.y + dy)
 

@@ -1,8 +1,9 @@
-from typing import List, Tuple
-from src.astar.state import State
-from src.astar.agent import Agent
-from src.util.grid import Grid
 import itertools
+from typing import List, Tuple
+
+from src.astar.agent import Agent
+from src.astar.state import State
+from src.util.grid import Grid
 
 
 class MAPFProblem:
@@ -38,7 +39,8 @@ class MAPFProblem:
     def expand(self, state: State) -> List[Tuple[State, int]]:
         agents_moves = []
         for agent in state.agents:
-            agent_moves = [(Agent(neighbor, agent.color), 1 + agent.waiting_cost) for neighbor in self.grid.get_neighbors(agent.coord)]
+            agent_moves = [(Agent(neighbor, agent.color), 1 + agent.waiting_cost) for neighbor in
+                           self.grid.get_neighbors(agent.coord)]
             if self.on_goal(agent):
                 agent_moves.append((Agent(agent.coord, agent.color, agent.waiting_cost + 1), 0))
             else:

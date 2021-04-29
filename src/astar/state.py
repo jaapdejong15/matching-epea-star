@@ -1,5 +1,7 @@
 from typing import List
+
 from src.astar.agent import Agent
+
 
 class State:
     def __init__(self, agents: List[Agent]):

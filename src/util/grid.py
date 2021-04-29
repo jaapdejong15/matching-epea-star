@@ -1,10 +1,14 @@
-from src.util.coordinate import Coordinate, Direction
 from typing import List
+
 from mapfmclient import MarkedLocation
+
 from src.astar.agent import Agent
+from src.util.coordinate import Coordinate, Direction
+
 
 class Grid:
-    def __init__(self, width: int, height: int, grid: List[List[int]], agents: List[Agent], goals: List[MarkedLocation], calculate_heuristic=False):
+    def __init__(self, width: int, height: int, grid: List[List[int]], agents: List[Agent], goals: List[MarkedLocation],
+                 calculate_heuristic=False):
         self.width = width
         self.height = height
         self.grid = grid
@@ -31,7 +35,7 @@ class Grid:
                     h = float('inf')
                     for goal in colors[key]:
                         # Minimum manhattan distance
-                        h = min(h, abs(x-goal.x) + abs(y-goal.y))
+                        h = min(h, abs(x - goal.x) + abs(y - goal.y))
                     row.append(h)
                 color_heuristic.append(row)
             self.heuristic[key] = color_heuristic
