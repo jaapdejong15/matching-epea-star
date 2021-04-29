@@ -1,28 +1,12 @@
 from __future__ import annotations
 
 from heapq import heappush, heappop
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
-from mapfmclient import Problem, Solution
-
+from src.astar.node import Node
 from src.astar.state import State
-from src.problem.standard_problem import StandardProblem
-
-
-class Node:
-
-    def __init__(self, state: State, cost: int, heuristic: int, parent=None):
-        self.state = state
-        self.cost = cost  # f(n)
-        self.heuristic = heuristic  # h(n)
-        self.value = cost + heuristic  # F(n) - Stored value. Will be larger than cost + heuristic when the node is collapsed
-        self.parent = parent
-
-    def __eq__(self, other: Node):
-        return self.value == other.value
-
-    def __lt__(self, other: Node):
-        return (self.value, self.heuristic) < (other.value, other.heuristic)
+from src.problem.mapf_problem import MAPFProblem
+from src.util.path import Path
 
 
 def get_path(node: Node) -> List[Node]:
@@ -33,15 +17,14 @@ def get_path(node: Node) -> List[Node]:
     path.reverse()
     return path
 
-
-def convert_path(nodes: List[Node]):
+def convert_path(nodes: List[Node]) -> List[Path]:
     paths = []
     for i, agent in enumerate(nodes[0].state.agents):
         path = []
         for node in nodes:
             path.append((node.state.agents[i].coord.x, node.state.agents[i].coord.y))
-        paths.append(path)
-    return Solution.from_paths(paths)
+        paths.append(Path(path, agent.identifier))
+    return paths
 
 
 class PEAStar:
@@ -52,15 +35,18 @@ class PEAStar:
                  C = infinity: No memory savings, normal A*
     """
 
-    def __init__(self, problem: Problem, memory_constant: int = 0, pre_compute_heuristics=False):
-
-        self.problem = StandardProblem(problem, compute_heuristic=pre_compute_heuristics)
+    def __init__(self, problem: MAPFProblem, memory_constant: int = 0):
+        self.problem = problem
         self.memory_constant = memory_constant
         initial_state = State(self.problem.agents)
         self.initial_node = Node(initial_state, len(self.problem.agents), self.problem.heuristic(initial_state))
 
-    def solve(self) -> Optional[Solution]:
+    def solve(self) -> Optional[List[Path]]:
         frontier = []
+        """
+        TODO: Replace seen and fully_expanded by dict and expand if:
+          - 
+        """
         seen = set()  # Avoid re-adding states that already have been expanded at least once
         fully_expanded = set()  # Avoid evaluating states that have been fully expanded already
         heappush(frontier, self.initial_node)

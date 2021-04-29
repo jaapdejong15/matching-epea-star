@@ -7,6 +7,7 @@ from src.util.grid import Grid
 
 
 class MAPFProblem:
+    # TODO: Get agents from grid instead of parameter
     def __init__(self, agents: List[Agent], grid: Grid, goals):
         self.agents = agents
         self.grid = grid
@@ -39,19 +40,19 @@ class MAPFProblem:
     def expand(self, state: State) -> List[Tuple[State, int]]:
         agents_moves = []
         for agent in state.agents:
-            agent_moves = [(Agent(neighbor, agent.color), 1 + agent.waiting_cost) for neighbor in
-                           self.grid.get_neighbors(agent.coord)]
+            agent_moves = [(Agent(neighbor, agent.color, i), 1 + agent.waiting_cost) for i, neighbor in
+                           enumerate(self.grid.get_neighbors(agent.coord))]
             if self.on_goal(agent):
-                agent_moves.append((Agent(agent.coord, agent.color, agent.waiting_cost + 1), 0))
+                agent_moves.append((Agent(agent.coord, agent.color, agent.identifier, waiting_cost=agent.waiting_cost + 1), 0))
             else:
-                agent_moves.append((Agent(agent.coord, agent.color), 1 + agent.waiting_cost))
+                agent_moves.append((Agent(agent.coord, agent.color, agent.identifier), 1 + agent.waiting_cost))
             agents_moves.append(agent_moves)
 
-        possible_moves = itertools.product(*agents_moves)
+        operators = itertools.product(*agents_moves)
 
         # Check constraints
         states = []
-        for move in possible_moves:
+        for move in operators:
             coords = set()
             edge_conflict = False
             vertex_conflict = False
