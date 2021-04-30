@@ -1,8 +1,10 @@
 import itertools
+import time
 from typing import List, Tuple, NewType, Dict
 
 from src.astar.agent import Agent
 from src.astar.node import Node
+from src.astar.operator_finder import OperatorFinder
 from src.astar.state import State
 from src.util.coordinate import Direction
 from src.util.grid import Grid
@@ -14,6 +16,7 @@ class MAPFProblem:
     def __init__(self, grid: Grid):
         self.grid = grid
         self.osf: Dict[int, List[List[OSFTable]]] = dict()
+        self.osf_time = 0
         for color in grid.colors.keys():
             self.calculate_single_color_osf(color)
 
@@ -27,17 +30,6 @@ class MAPFProblem:
         return all(self.on_goal(agent) for agent in state.agents)
 
     def expand(self, node: Node, v) -> Tuple[List[Node], int]:
-        agents_moves = []
-        # for agent in state.agents:
-        #     agent_moves = [(Agent(neighbor, agent.color, i), 1 + agent.waiting_cost) for i, neighbor in
-        #                    enumerate(self.grid.get_neighbors(agent.coord))]
-        #     if self.on_goal(agent):
-        #         agent_moves.append(
-        #             (Agent(agent.coord, agent.color, agent.identifier, waiting_cost=agent.waiting_cost + 1), 0))
-        #     else:
-        #         agent_moves.append((Agent(agent.coord, agent.color, agent.identifier), 1 + agent.waiting_cost))
-        #     agents_moves.append(agent_moves)
-
         children, next_value = self.get_children(node, v)
 
         # Check constraints
@@ -78,32 +70,28 @@ class MAPFProblem:
         for i, agent in enumerate(parent.state.agents):
             waiting_costs = 0
             if self.on_goal(agent):
-                if operator[i][0] is not Direction.WAIT:
+                if operator[i] is not Direction.WAIT:
                     costs += agent.waiting_cost + 1
                 else:
                     waiting_costs = agent.waiting_cost + 1
             else:
                 costs += 1
-            agents.append(Agent(agent.coord.move(operator[i][0]), agent.color, agent.identifier, waiting_cost=waiting_costs))
+            agents.append(Agent(agent.coord.move(operator[i]), agent.color, agent.identifier, waiting_cost=waiting_costs))
 
         child_state = State(agents)
         return Node(child_state, costs, self.heuristic(child_state), parent=parent)
 
     def get_children(self, parent: Node, v: int) -> Tuple[List[Node], int]:
         # TODO: Cache results? Create algorithm to obtain applicable operators more efficiently than filtering cartesian product?
-        operators = itertools.product(*[self.osf[agent.color][agent.coord.y][agent.coord.x] for agent in parent.state.agents])
-        selected_children = []
-        next_value = float('inf')
-        i = 0
-        for operator in operators:
-            i += 1
-            value = sum(map((lambda x : x[1]), operator))
-            # print(f"Generated operator with direction {operator[0][0].name}. Value={value} and v={v}")
-            if value == v:
-                selected_children.append(self.get_child(parent, operator))
-            elif value > v:
-                next_value = min(value, next_value)
-        return selected_children, next_value
+        start = time.perf_counter_ns()
+        operator_finder = OperatorFinder(v, [self.osf[agent.color][agent.coord.y][agent.coord.x] for agent in parent.state.agents])
+
+        operator_finder.find_operators(0, [], 0)
+
+        children = [self.get_child(parent, operator) for operator in operator_finder.operators]
+        stop = time.perf_counter_ns()
+        self.osf_time += stop - start
+        return children, operator_finder.next_target_value
 
     def calculate_single_color_osf(self, color: int) -> None:
         heuristic = self.grid.heuristic[color]

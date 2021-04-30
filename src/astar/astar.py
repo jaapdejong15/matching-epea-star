@@ -25,7 +25,7 @@ def convert_path(nodes: List[Node]) -> List[Path]:
         for node in nodes:
             path.append((node.state.agents[i].coord.x, node.state.agents[i].coord.y))
         paths.append(Path(path, agent.identifier))
-    print(f"Path: {[path.path for path in paths]}")
+    #print(f"Path: {[path.path for path in paths]}")
     return paths
 
 
@@ -49,18 +49,14 @@ class EPEAStar:
         fully_expanded = set()  # Avoid evaluating states that have been fully expanded already
         heappush(frontier, self.initial_node)
 
-        counter = 0
+        #counter = 0
         while frontier:
             node = heappop(frontier)
             if node.state in fully_expanded:
                 continue
             if self.problem.is_solved(node.state):
-                print(f"Solved! Frontier size: {len(frontier)}, Cost: {node.cost}")
+                print(f"Solved! Frontier size: {len(frontier)}, Cost: {node.cost}, OSF time: {self.problem.osf_time / 1000000}ms")
                 return convert_path(get_path(node))
-
-            counter += 1
-            if counter % 1000 == 0:
-                print(f"Iteration: {counter}, frontier size: {len(frontier)}")
 
             children, next_value = self.problem.expand(node, node.delta_f)
             for child in children:
