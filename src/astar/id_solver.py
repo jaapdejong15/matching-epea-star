@@ -45,6 +45,7 @@ class IDSolver:
 
     def __init__(self, original: Problem, memory_constant=0):
         self.memory_constant = memory_constant
+        self.paths: List[Path] = []
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
         original_goals = original.goals
         goals: List[MarkedLocation] = []
@@ -55,10 +56,10 @@ class IDSolver:
                     original_goals.remove(goal)
                     break
 
-        self.grid = Grid(original.width, original.height, original.grid, agents, goals, calculate_heuristic=True)
+        self.grid = Grid(original.width, original.height, original.grid, agents, goals)
 
-    def solve(self) -> Optional[Solution]:
-        paths: List[Path] = []
+    def solve(self) -> Solution:
+        self.paths = []
         groups = [[agent] for agent in self.grid.agents]
 
         # Solve for every group
@@ -68,41 +69,45 @@ class IDSolver:
             solver = PEAStar(problem, memory_constant=self.memory_constant)
             agent_path = solver.solve()
             if agent_path is None:
-                return None  # Some agent has no possible path
+                raise Exception(f"Agent {group[0].identifier} has no path!")
             else:
                 assert len(agent_path) == 1
-                paths.append(agent_path[0])
+                self.paths.append(agent_path[0])
 
-        conflict = find_conflict(paths)
+        conflict = find_conflict(self.paths)
         while conflict is not None:
             a, b = conflict
-            group_a = None
-            group_b = None
-            for i, group in enumerate(groups):
-                for agent in group:
-                    if agent.identifier == a:
-                        group_a = group
-                        break
-                    if agent.identifier == b:
-                        group_b = group
-                        break
-            assert group_a is not None and group_b is not None
+            groups = self.merge_groups(groups, a, b)
+            conflict = find_conflict(self.paths)
+        return Solution.from_paths(self.paths)
 
-            # Combine groups a and b
-            group_a.extend(group_b)
-            print(f"Conflict for agents groups {a} and {b}, combining groups: {str([x.identifier for x in group_a])}")
-            groups.remove(group_b)
+    def merge_groups(self, groups: List[List[Agent]], agent_a_id: int, agent_b_id: int) -> List[List[Agent]]:
+        group_a = None
+        group_b = None
+        for i, group in enumerate(groups):
+            for agent in group:
+                if agent.identifier == agent_a_id:
+                    group_a = group
+                    break
+                if agent.identifier == agent_b_id:
+                    group_b = group
+                    break
+        assert group_a is not None and group_b is not None
 
-            # Try to solve new group
-            self.grid.agents = group_a
-            problem = MAPFProblem(self.grid)
-            solver = PEAStar(problem, memory_constant=self.memory_constant)
-            group_paths = solver.solve()
+        # Combine groups a and b
+        group_a.extend(group_b)
+        print(f"Conflict for agents groups {agent_a_id} and {agent_b_id}, combining groups: {str([x.identifier for x in group_a])}")
+        groups.remove(group_b)
 
-            for agent, path in zip(group_a, group_paths):
-                paths[agent.identifier] = path
+        # Try to solve new group
+        self.grid.agents = group_a
+        problem = MAPFProblem(self.grid)
+        solver = PEAStar(problem, memory_constant=self.memory_constant)
+        group_paths = solver.solve()
 
-            if group_paths is None:
-                return None  # There is an impossible combination of agents
-            conflict = find_conflict(paths)
-        return Solution.from_paths(paths)
+        for agent, path in zip(group_a, group_paths):
+            self.paths[agent.identifier] = path
+
+        if group_paths is None:
+            raise Exception("There is an impossible combination of agents")
+        return groups

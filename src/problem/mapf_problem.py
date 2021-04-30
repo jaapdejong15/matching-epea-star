@@ -16,21 +16,6 @@ class MAPFProblem:
                 return True
         return False
 
-    def heuristic(self, state: State) -> int:
-        heuristic = 0
-        if self.grid.calculate_heuristic:
-            for agent in state.agents:
-                heuristic += self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
-        else:
-            # Sum of distance to closest goal of same color for each agent
-            for agent in state.agents:
-                goal_distance = float('inf')
-                for goal in self.grid.goals:
-                    if goal.color == agent.color:
-                        goal_distance = min(goal_distance, abs(agent.coord.x - goal.x) + abs(agent.coord.y - goal.y))
-                heuristic += goal_distance
-        return heuristic
-
     def is_solved(self, state) -> bool:
         return all(self.on_goal(agent) for agent in state.agents)
 
@@ -78,3 +63,9 @@ class MAPFProblem:
                 move = State(agents)
                 states.append((move, added_cost))
         return states
+
+    def heuristic(self, state):
+        total = 0
+        for agent in state.agents:
+            total += self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
+        return total

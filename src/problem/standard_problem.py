@@ -9,7 +9,7 @@ from src.util.grid import Grid
 # Takes the first matching it can find
 class StandardProblem(MAPFProblem):
 
-    def __init__(self, original: Problem, compute_heuristic=False):
+    def __init__(self, original: Problem):
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
         original_goals = original.goals
         goals = []
@@ -20,5 +20,5 @@ class StandardProblem(MAPFProblem):
                     original_goals.remove(goal)
                     break
 
-        grid = Grid(original.width, original.height, original.grid, agents, goals, compute_heuristic)
+        grid = Grid(original.width, original.height, original.grid, agents, goals)
         super().__init__(grid)
