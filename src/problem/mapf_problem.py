@@ -7,14 +7,11 @@ from src.util.grid import Grid
 
 
 class MAPFProblem:
-    # TODO: Get agents from grid instead of parameter
-    def __init__(self, agents: List[Agent], grid: Grid, goals):
-        self.agents = agents
+    def __init__(self, grid: Grid):
         self.grid = grid
-        self.goals = goals
 
     def on_goal(self, agent: Agent) -> bool:
-        for goal in self.goals:
+        for goal in self.grid.goals:
             if goal.x == agent.coord.x and goal.y == agent.coord.y and goal.color == agent.color:
                 return True
         return False
@@ -28,7 +25,7 @@ class MAPFProblem:
             # Sum of distance to closest goal of same color for each agent
             for agent in state.agents:
                 goal_distance = float('inf')
-                for goal in self.goals:
+                for goal in self.grid.goals:
                     if goal.color == agent.color:
                         goal_distance = min(goal_distance, abs(agent.coord.x - goal.x) + abs(agent.coord.y - goal.y))
                 heuristic += goal_distance
@@ -43,7 +40,8 @@ class MAPFProblem:
             agent_moves = [(Agent(neighbor, agent.color, i), 1 + agent.waiting_cost) for i, neighbor in
                            enumerate(self.grid.get_neighbors(agent.coord))]
             if self.on_goal(agent):
-                agent_moves.append((Agent(agent.coord, agent.color, agent.identifier, waiting_cost=agent.waiting_cost + 1), 0))
+                agent_moves.append(
+                    (Agent(agent.coord, agent.color, agent.identifier, waiting_cost=agent.waiting_cost + 1), 0))
             else:
                 agent_moves.append((Agent(agent.coord, agent.color, agent.identifier), 1 + agent.waiting_cost))
             agents_moves.append(agent_moves)

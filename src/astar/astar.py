@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from heapq import heappush, heappop
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from src.astar.node import Node
 from src.astar.state import State
@@ -16,6 +16,7 @@ def get_path(node: Node) -> List[Node]:
         node = node.parent
     path.reverse()
     return path
+
 
 def convert_path(nodes: List[Node]) -> List[Path]:
     paths = []
@@ -38,8 +39,8 @@ class PEAStar:
     def __init__(self, problem: MAPFProblem, memory_constant: int = 0):
         self.problem = problem
         self.memory_constant = memory_constant
-        initial_state = State(self.problem.agents)
-        self.initial_node = Node(initial_state, len(self.problem.agents), self.problem.heuristic(initial_state))
+        initial_state = State(self.problem.grid.agents)
+        self.initial_node = Node(initial_state, len(self.problem.grid.agents), self.problem.heuristic(initial_state))
 
     def solve(self) -> Optional[List[Path]]:
         frontier = []

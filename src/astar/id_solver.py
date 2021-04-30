@@ -1,9 +1,9 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List
 
 from mapfmclient import Problem, Solution, MarkedLocation
 
 from src.astar.agent import Agent
-from src.astar.astar import PEAStar, convert_path
+from src.astar.astar import PEAStar
 from src.problem.mapf_problem import MAPFProblem
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid
@@ -19,7 +19,7 @@ def check_conflicts(path1: Path, path2: Path) -> bool:
         if path1[i] == path2[i]:
             return True
         # Edge conflict
-        if path1[i] == path2[i-1] and path1[i-1] == path2[i]:
+        if path1[i] == path2[i - 1] and path1[i - 1] == path2[i]:
             return True
         i += 1
     while i < n:
@@ -63,13 +63,14 @@ class IDSolver:
 
         # Solve for every group
         for group in groups:
-            problem = MAPFProblem(group, self.grid, self.grid.goals)
+            self.grid.agents = group
+            problem = MAPFProblem(self.grid)
             solver = PEAStar(problem, memory_constant=self.memory_constant)
             agent_path = solver.solve()
             if agent_path is None:
-                return None # Some agent has no possible path
+                return None  # Some agent has no possible path
             else:
-                # Should always contain 1 path, since the problem only has one agent
+                assert len(agent_path) == 1
                 paths.append(agent_path[0])
 
         conflict = find_conflict(paths)
@@ -93,7 +94,8 @@ class IDSolver:
             groups.remove(group_b)
 
             # Try to solve new group
-            problem = MAPFProblem(group_a, self.grid, self.grid.goals)
+            self.grid.agents = group_a
+            problem = MAPFProblem(self.grid)
             solver = PEAStar(problem, memory_constant=self.memory_constant)
             group_paths = solver.solve()
 
@@ -101,8 +103,6 @@ class IDSolver:
                 paths[agent.identifier] = path
 
             if group_paths is None:
-                return None # There is an impossible combination of agents
+                return None  # There is an impossible combination of agents
             conflict = find_conflict(paths)
         return Solution.from_paths(paths)
-
-
