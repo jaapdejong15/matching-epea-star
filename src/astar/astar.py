@@ -25,6 +25,7 @@ def convert_path(nodes: List[Node]) -> List[Path]:
         for node in nodes:
             path.append((node.state.agents[i].coord.x, node.state.agents[i].coord.y))
         paths.append(Path(path, agent.identifier))
+    print(f"Path: {[path.path for path in paths]}")
     return paths
 
 
@@ -52,36 +53,28 @@ class PEAStar:
         fully_expanded = set()  # Avoid evaluating states that have been fully expanded already
         heappush(frontier, self.initial_node)
 
+        counter = 0
         while frontier:
             node = heappop(frontier)
             if node.state in fully_expanded:
                 continue
             if self.problem.is_solved(node.state):
+                print(f"Solved! Frontier size: {len(frontier)}, Cost: {node.cost}")
                 return convert_path(get_path(node))
 
-            children = self.problem.expand(node.state)
-            child_not_added = False
-            min_value = float('inf')  # Lowest cost of the unopened children, used as new value for parent node
-            for (state, added_cost) in children:
-                if state not in seen and state != node.state:
-                    heuristic = self.problem.heuristic(state)
-                    child_cost = node.cost + added_cost
-                    child_value = child_cost + heuristic  # child cost
+            counter += 1
+            if counter % 1000 == 0:
+                print(f"Iteration: {counter}, frontier size: {len(frontier)}")
 
-                    # For an admissible heuristic, the child value cannot be lower than the parent value
-                    if child_value <= node.value + self.memory_constant:
-                        child_node = Node(state, child_cost, heuristic, parent=node)
-                        heappush(frontier, child_node)
-                    else:
-                        child_not_added = True
-                        min_value = min(min_value, child_value)
+            children, next_value = self.problem.expand(node, node.delta_f)
+            for child in children:
+                if child.state not in seen and child.state != node.state:
+                    heappush(frontier, child)
 
-            # If a child was not added
-            if child_not_added:
-                # Set node value to the lowest value of the unopened children and put in frontier
-                node.value = min_value
-                heappush(frontier, node)
-            else:
+            if next_value == float('inf'):
                 fully_expanded.add(node.state)
+            else:
+                node.delta_f = next_value
+                heappush(frontier, node)
             seen.add(node.state)
         return None

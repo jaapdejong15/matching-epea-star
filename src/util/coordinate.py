@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum
 
 
@@ -12,15 +13,15 @@ class Direction(Enum):
 
 class Coordinate:
 
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    def __init__(self, x: int, y: int):
+        self.x: int = x
+        self.y: int = y
 
     def move(self, d: Direction):
         dx, dy = d.value
         return Coordinate(self.x + dx, self.y + dy)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Coordinate):
         return self.x == other.x and self.y == other.y
 
     def __hash__(self):

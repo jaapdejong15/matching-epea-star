@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 
 from mapfmclient import MarkedLocation
 
@@ -17,7 +17,6 @@ class BFSNode:
     def __lt__(self, other):
         return self.cost < other.cost
 
-
 class Grid:
     def __init__(self, width: int, height: int, grid: List[List[int]], agents: List[Agent], goals: List[MarkedLocation]):
         self.width = width
@@ -25,27 +24,21 @@ class Grid:
         self.grid = grid
         self.agents = agents
         self.goals = goals
-        self.heuristic = {}
+        self.colors: Dict[int, List[MarkedLocation]] = self.__get_colors()
+        self.heuristic: Dict[int, List[List[Any]]] = {}
         self.__compute_sic_heuristic()
 
     """
     Computes the Manhattan Distance Heuristic
     """
     def __compute_md_heuristic(self):
-        colors = {}
-        for goal in self.goals:
-            if colors.get(goal.color):
-                colors[goal.color].append(goal)
-            else:
-                colors[goal.color] = [goal]
-
-        for key in colors.keys():
+        for key in self.colors.keys():
             color_heuristic = []
             for y in range(self.height):
                 row = []
                 for x in range(self.width):
                     h = float('inf')
-                    for goal in colors[key]:
+                    for goal in self.colors[key]:
                         # Minimum manhattan distance
                         h = min(h, abs(x - goal.x) + abs(y - goal.y))
                     row.append(h)
@@ -56,14 +49,7 @@ class Grid:
     Computes the Sum of Individual Costs (SIC) heuristic
     """
     def __compute_sic_heuristic(self):
-        colors = dict()
-        for goal in self.goals:
-            if colors.get(goal.color):
-                colors[goal.color].append(goal)
-            else:
-                colors[goal.color] = [goal]
-
-        for color, goals in colors.items():
+        for color, goals in self.colors.items():
             self.heuristic[color] = [[float('inf')] * self.width for _ in range(self.height)]
             assert len(self.heuristic[color][0]) == self.width
             assert len(self.heuristic[color]) == self.height
@@ -83,11 +69,14 @@ class Grid:
                         seen.add(neighbor)
                         heappush(frontier, BFSNode(neighbor, node.cost + 1))
 
-    def __is_wall(self, pos: Coordinate) -> bool:
-        return self.grid[pos.y][pos.x] == 1
+    def __is_wall(self, x: int, y: int) -> bool:
+        return self.grid[y][x] == 1
 
     def traversable(self, pos: Coordinate) -> bool:
-        return 0 <= pos.x < self.width and 0 <= pos.y < self.height and not self.__is_wall(pos)
+        return self.traversable_coords(pos.x, pos.y)
+
+    def traversable_coords(self, x: int, y: int) -> bool:
+        return 0 <= x < self.width and 0 <= y < self.height and not self.__is_wall(x,y)
 
     def get_neighbors(self, pos: Coordinate) -> List[Coordinate]:
         neighbors = []
@@ -97,3 +86,11 @@ class Grid:
                 neighbors.append(neighbor)
         return neighbors
 
+    def __get_colors(self) -> Dict[int, List[MarkedLocation]]:
+        colors = dict()
+        for goal in self.goals:
+            if colors.get(goal.color):
+                colors[goal.color].append(goal)
+            else:
+                colors[goal.color] = [goal]
+        return colors

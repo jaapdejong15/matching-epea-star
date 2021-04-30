@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import List
 
 from mapfmclient import Problem, Solution, MarkedLocation
 
@@ -92,7 +92,8 @@ class IDSolver:
                 if agent.identifier == agent_b_id:
                     group_b = group
                     break
-        assert group_a is not None and group_b is not None
+        assert group_a is not None
+        assert group_b is not None
 
         # Combine groups a and b
         group_a.extend(group_b)
