@@ -29,17 +29,13 @@ def convert_path(nodes: List[Node]) -> List[Path]:
     return paths
 
 
-class PEAStar:
+class EPEAStar:
     """
     :param problem: The problem instance that will be solved
-    :param memory_constant: Determines the amount of memory savings in exchange for runtime. Also called C.
-                 C = 0: Maximum memory savings
-                 C = infinity: No memory savings, normal A*
     """
 
-    def __init__(self, problem: MAPFProblem, memory_constant: int = 0):
+    def __init__(self, problem: MAPFProblem):
         self.problem = problem
-        self.memory_constant = memory_constant
         initial_state = State(self.problem.grid.agents)
         self.initial_node = Node(initial_state, len(self.problem.grid.agents), self.problem.heuristic(initial_state))
 
@@ -75,6 +71,7 @@ class PEAStar:
                 fully_expanded.add(node.state)
             else:
                 node.delta_f = next_value
+                node.value = node.cost + node.heuristic + node.delta_f
                 heappush(frontier, node)
             seen.add(node.state)
         return None
