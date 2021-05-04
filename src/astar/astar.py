@@ -62,12 +62,12 @@ class EPEAStar:
 
             # Check if the current state is a solution to the problem
             if self.problem.is_solved(node.state):
-                print(
-                    f"Solved! Frontier size: {len(frontier)}, Seen size: {len(seen)}, Fully expanded: {len(fully_expanded)}")
+                #print(
+                #    f"Solved! Frontier size: {len(frontier)}, Seen size: {len(seen)}, Fully expanded: {len(fully_expanded)}")
                 return convert_path(get_path(node))
 
             # Expand the current node
-            children, next_value = self.problem.expand(node, node.delta_f)
+            children, next_value = self.problem.expand(node)
             nodes_expanded += 1
             for child in children:
                 if child.state not in seen and child.state != node.state:

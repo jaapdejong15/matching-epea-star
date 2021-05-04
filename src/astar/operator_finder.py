@@ -20,6 +20,13 @@ class OperatorFinder:
         self.target_sum = target_sum
         self.agent_operators = agent_operators
         self.next_target_value = float('inf')
+        self.max_values = []
+        s = 0
+        for operators in reversed(agent_operators):
+            self.max_values.append(s)
+            s += max(map(lambda x : x[1], operators))
+        self.max_values.reverse()
+        #print(f"Values: {agent_operators}\nMax values: {self.max_values}")
 
     def find_operators(self, current_agent: int, previous_operators, previous_sum) -> None:
         """
@@ -35,9 +42,10 @@ class OperatorFinder:
             current_operators = copy(previous_operators)
             current_operators.append(operator[0])
             current_sum = previous_sum + operator[1]
+            if current_sum + self.max_values[current_agent] < self.target_sum:
+                return
             if current_sum > self.target_sum:
-                self.next_target_value = min(self.next_target_value, current_sum)
-                # TODO: Are these target values obtainable? Shouldn't we check if we are at the last agent?
+                self.next_target_value = min(self.next_target_value, current_sum + self.max_values[current_agent])
                 return  # Since operators are sorted, there is no need to check the other operators
             if current_agent == len(self.agent_operators) - 1:
                 if current_sum == self.target_sum:

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Optional
 
 from mapfmclient import Problem, Solution, MarkedLocation
 
@@ -11,6 +11,12 @@ from src.util.path import Path
 
 
 def check_conflicts(path1: Path, path2: Path) -> bool:
+    """
+    Checks if two paths have either an edge conflict or a vertex conflict
+    :param path1:   The first path
+    :param path2:   The second path
+    :return:        True if paths are conflicting, False otherwise
+    """
     n = len(path1)
     m = len(path2)
     i = 1
@@ -33,7 +39,12 @@ def check_conflicts(path1: Path, path2: Path) -> bool:
     return False
 
 
-def find_conflict(paths: List[Path]):
+def find_conflict(paths: List[Path]) -> Optional[Tuple[int, int]]:
+    """
+
+    :param paths:   Paths to check conflicts with
+    :return:        Agent identifiers of first conflicting paths
+    """
     for i in range(len(paths)):
         for j in range(i + 1, len(paths)):
             if check_conflicts(paths[i], paths[j]):
@@ -42,9 +53,16 @@ def find_conflict(paths: List[Path]):
 
 
 class IDSolver:
+    """
+    Solver that uses Independence Detection:
+    First solve for all agents individually. If paths are conflicting, merge the agents and solve for the new group
+    """
 
-    def __init__(self, original: Problem, memory_constant=0):
-        self.memory_constant = memory_constant
+    def __init__(self, original: Problem):
+        """
+        Constructs an IDSolver instance
+        :param original:        Original problem
+        """
         self.paths: List[Path] = []
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
         original_goals = original.goals
@@ -59,6 +77,10 @@ class IDSolver:
         self.grid = Grid(original.width, original.height, original.grid, agents, goals)
 
     def solve(self) -> Solution:
+        """
+        Solves the original problem
+        :return:    Solution with paths for every agent
+        """
         self.paths = []
         groups = [[agent] for agent in self.grid.agents]
 
@@ -82,6 +104,13 @@ class IDSolver:
         return Solution.from_paths(self.paths)
 
     def merge_groups(self, groups: List[List[Agent]], agent_a_id: int, agent_b_id: int) -> List[List[Agent]]:
+        """
+        Merge two groups with agents with conflicting paths
+        :param groups:      List of all groups
+        :param agent_a_id:  Identifier of the first conflicting agent
+        :param agent_b_id:  Identifier of the second conflicting agent
+        :return:            New list of groups
+        """
         group_a = None
         group_b = None
         for i, group in enumerate(groups):

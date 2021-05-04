@@ -21,7 +21,6 @@ class MAPFProblem:
         """
         self.grid = grid
         self.osf: Dict[int, List[List[OSFTable]]] = dict()
-        self.t = 0
 
         for color in grid.colors.keys():
             self.calculate_single_color_osf(color)
@@ -43,18 +42,15 @@ class MAPFProblem:
         :param state:   State for which it should be checked
         :returns:       True if state is a solution, False otherwise
         """
-        solved = all(self.on_goal(agent) for agent in state.agents)
-        if solved:
-            print(f"Operator selection took {self.t * 1000} ms")
-        return solved
+        return all(self.on_goal(agent) for agent in state.agents)
 
-    def expand(self, node: Node, v: int) -> Tuple[List[Node], int]:
+    def expand(self, node: Node) -> Tuple[List[Node], int]:
         """
         Expands an A* search tree node.
         :param node:    parent node
-        :param v:       Δf value for which to expand TODO: Get delta_f directly from parent node
         :returns:       List of child nodes and the next Δf value for the parent node
         """
+        v = node.delta_f
         children, next_value = self.get_children(node, v)
 
         # Check constraints
@@ -100,7 +96,6 @@ class MAPFProblem:
         :param operator:    Tuple of Directions of length #agents
         :returns:           The child node
         """
-        t1 = time.perf_counter()
         assert len(operator) == len(parent.state.agents)
 
         agents = []
@@ -117,7 +112,6 @@ class MAPFProblem:
             agents.append(
                 Agent(agent.coord.move(operator[i]), agent.color, agent.identifier, waiting_cost=waiting_costs))
 
-        self.t += time.perf_counter() - t1
         child_state = State(agents)
         return Node(child_state, costs, self.heuristic(child_state), parent=parent)
 
@@ -130,11 +124,8 @@ class MAPFProblem:
         """
         operator_finder = OperatorFinder(v, [self.osf[agent.color][agent.coord.y][agent.coord.x] for agent in
                                              parent.state.agents])
-
         operator_finder.find_operators(0, [], 0)
-
         children = [self.get_child(parent, operator) for operator in operator_finder.operators]
-
         return children, operator_finder.next_target_value
 
     def calculate_single_color_osf(self, color: int) -> None:
