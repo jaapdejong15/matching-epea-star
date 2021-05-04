@@ -12,7 +12,12 @@ OSFRow = NewType('OSFRow', Tuple[Direction, int])
 OSFTable = NewType('OSFTable', List[OSFRow])
 
 class MAPFProblem:
+
     def __init__(self, grid: Grid):
+        """
+        Creates an instance of MAPFProblem.
+        :param grid:    2d grid with starting locations and goals
+        """
         self.grid = grid
         self.osf: Dict[int, List[List[OSFTable]]] = dict()
         self.t = 0
@@ -21,18 +26,34 @@ class MAPFProblem:
             self.calculate_single_color_osf(color)
 
     def on_goal(self, agent: Agent) -> bool:
+        """
+        Checks if an agent is on a goal of the correct color.
+        :param agent:   Agent to check if it is on its goal
+        :returns:        True if the agent is on a goal, False otherwise
+        """
         for goal in self.grid.goals:
             if goal.x == agent.coord.x and goal.y == agent.coord.y and goal.color == agent.color:
                 return True
         return False
 
-    def is_solved(self, state) -> bool:
+    def is_solved(self, state: State) -> bool:
+        """
+        Checks if the given state is a valid solution to the problem.
+        :param state:   State for which it should be checked
+        :returns:       True if state is a solution, False otherwise
+        """
         solved = all(self.on_goal(agent) for agent in state.agents)
         if solved:
             print(f"Operator selection took {self.t*1000} ms")
         return solved
 
-    def expand(self, node: Node, v) -> Tuple[List[Node], int]:
+    def expand(self, node: Node, v: int) -> Tuple[List[Node], int]:
+        """
+        Expands an A* search tree node.
+        :param node:    parent node
+        :param v:       Δf value for which to expand TODO: Get delta_f directly from parent node
+        :returns:       List of child nodes and the next Δf value for the parent node
+        """
         children, next_value = self.get_children(node, v)
 
         # Check constraints
@@ -59,19 +80,25 @@ class MAPFProblem:
                 selected_children.append(child)
         return selected_children, next_value
 
-    def heuristic(self, state):
+    def heuristic(self, state: State) -> int:
+        """
+        Calculates the heuristic for the given state state
+        :param state:   state to calculate the heuristic for
+        :returns:       heuristic value for the state
+        """
         total = 0
         for agent in state.agents:
             total += self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
         return total
 
-    """
-    Applies an operator to a parent node to create a child node
-    :param parent: The parent node
-    :param operator: Tuple of Directions of length #agents
-    :returns: The child node
-    """
+
     def get_child(self, parent: Node, operator: Tuple[Direction, ...]) -> Node:
+        """
+        Applies an operator to a parent node to create a child node
+        :param parent:      The parent node
+        :param operator:    Tuple of Directions of length #agents
+        :returns:           The child node
+        """
         t1 = time.perf_counter()
         assert len(operator) == len(parent.state.agents)
 
@@ -92,7 +119,14 @@ class MAPFProblem:
         child_state = State(agents)
         return Node(child_state, costs, self.heuristic(child_state), parent=parent)
 
+
     def get_children(self, parent: Node, v: int) -> Tuple[List[Node], int]:
+        """
+        Uses the operator selection function (OSF) to get all relevant children from the parent node.
+        :param parent:  Parent node
+        :param v:       The Δf value.
+        :returns:       List of child nodes and next Δf value for the parent node
+        """
         operator_finder = OperatorFinder(v, [self.osf[agent.color][agent.coord.y][agent.coord.x] for agent in parent.state.agents])
 
         operator_finder.find_operators(0, [], 0)
@@ -101,7 +135,13 @@ class MAPFProblem:
 
         return children, operator_finder.next_target_value
 
+
     def calculate_single_color_osf(self, color: int) -> None:
+        """
+        Precomputes the operator selection function (OSF) for individual agents.
+        Results are stored in self.osf
+        :param color: Color for which OSF components have to be computed
+        """
         heuristic = self.grid.heuristic[color]
         single_color_osf: List[List[OSFTable]] = []
         for y in range(self.grid.height):
@@ -119,7 +159,16 @@ class MAPFProblem:
         assert len(single_color_osf) == self.grid.height
         self.osf[color] = single_color_osf
 
-    def generate_osf_table(self, x:int, y:int, heuristic: int, color: int) -> OSFTable:
+
+    def generate_osf_table(self, x: int, y: int, heuristic: int, color: int) -> OSFTable:
+        """
+        Generates an operator selection function (OSF) table for a single color and vertex in the grid
+        :param x:               x-coordinate of the vertex
+        :param y:               y-coordinate of the vertex
+        :param heuristic:       heuristic for the color at the given (x,y).
+        :param color:           color for the OSF
+        :returns:               OSF table with Δf values for each move, sorted on Δf
+        """
         osf_table: List[OSFRow] = []
         for direction in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
             dx, dy = direction.value
