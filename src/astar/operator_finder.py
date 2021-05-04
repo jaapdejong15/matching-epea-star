@@ -43,9 +43,10 @@ class OperatorFinder:
             current_operators.append(operator[0])
             current_sum = previous_sum + operator[1]
             if current_sum + self.max_values[current_agent] < self.target_sum:
+                #self.next_target_value = min(self.next_target_value + self.max_values[current_agent], current_sum)
                 return
             if current_sum > self.target_sum:
-                self.next_target_value = min(self.next_target_value, current_sum + self.max_values[current_agent])
+                self.next_target_value = min(self.next_target_value, current_sum)
                 return  # Since operators are sorted, there is no need to check the other operators
             if current_agent == len(self.agent_operators) - 1:
                 if current_sum == self.target_sum:
