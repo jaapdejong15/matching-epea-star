@@ -4,9 +4,11 @@ from mapfmclient import Solution, MapfBenchmarker, Problem
 
 from src.astar.id_solver import IDSolver
 
+
 def solve(problem: Problem) -> Solution:
     solver = IDSolver(problem)
     return solver.solve()
+
 
 def get_version(is_debug, current_version) -> str:
     if not is_debug:

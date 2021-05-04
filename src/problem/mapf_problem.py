@@ -11,6 +11,7 @@ from src.util.grid import Grid
 OSFRow = NewType('OSFRow', Tuple[Direction, int])
 OSFTable = NewType('OSFTable', List[OSFRow])
 
+
 class MAPFProblem:
 
     def __init__(self, grid: Grid):
@@ -44,7 +45,7 @@ class MAPFProblem:
         """
         solved = all(self.on_goal(agent) for agent in state.agents)
         if solved:
-            print(f"Operator selection took {self.t*1000} ms")
+            print(f"Operator selection took {self.t * 1000} ms")
         return solved
 
     def expand(self, node: Node, v: int) -> Tuple[List[Node], int]:
@@ -71,7 +72,8 @@ class MAPFProblem:
 
                 # Check edge conflicts
                 for j in range(i + 1, len(node.state.agents)):
-                    if child.state.agents[i].coord == node.state.agents[j].coord and child.state.agents[j].coord == node.state.agents[i].coord:
+                    if child.state.agents[i].coord == node.state.agents[j].coord and child.state.agents[j].coord == \
+                            node.state.agents[i].coord:
                         edge_conflict = True
                         break
                 if edge_conflict:
@@ -90,7 +92,6 @@ class MAPFProblem:
         for agent in state.agents:
             total += self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
         return total
-
 
     def get_child(self, parent: Node, operator: Tuple[Direction, ...]) -> Node:
         """
@@ -113,12 +114,12 @@ class MAPFProblem:
                     waiting_costs = agent.waiting_cost + 1
             else:
                 costs += 1
-            agents.append(Agent(agent.coord.move(operator[i]), agent.color, agent.identifier, waiting_cost=waiting_costs))
+            agents.append(
+                Agent(agent.coord.move(operator[i]), agent.color, agent.identifier, waiting_cost=waiting_costs))
 
         self.t += time.perf_counter() - t1
         child_state = State(agents)
         return Node(child_state, costs, self.heuristic(child_state), parent=parent)
-
 
     def get_children(self, parent: Node, v: int) -> Tuple[List[Node], int]:
         """
@@ -127,14 +128,14 @@ class MAPFProblem:
         :param v:       The Δf value.
         :returns:       List of child nodes and next Δf value for the parent node
         """
-        operator_finder = OperatorFinder(v, [self.osf[agent.color][agent.coord.y][agent.coord.x] for agent in parent.state.agents])
+        operator_finder = OperatorFinder(v, [self.osf[agent.color][agent.coord.y][agent.coord.x] for agent in
+                                             parent.state.agents])
 
         operator_finder.find_operators(0, [], 0)
 
         children = [self.get_child(parent, operator) for operator in operator_finder.operators]
 
         return children, operator_finder.next_target_value
-
 
     def calculate_single_color_osf(self, color: int) -> None:
         """
@@ -159,7 +160,6 @@ class MAPFProblem:
         assert len(single_color_osf) == self.grid.height
         self.osf[color] = single_color_osf
 
-
     def generate_osf_table(self, x: int, y: int, heuristic: int, color: int) -> OSFTable:
         """
         Generates an operator selection function (OSF) table for a single color and vertex in the grid
@@ -172,18 +172,12 @@ class MAPFProblem:
         osf_table: List[OSFRow] = []
         for direction in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
             dx, dy = direction.value
-            new_x: int = x+dx
-            new_y: int = y+dy
+            new_x: int = x + dx
+            new_y: int = y + dy
             if self.grid.traversable_coords(new_x, new_y):
                 delta_f: int = 1 + self.grid.heuristic[color][new_y][new_x] - heuristic
                 osf_table.append(OSFRow((direction, delta_f)))
 
         osf_table.append(OSFRow((Direction.WAIT, 1)))
-        osf_table.sort(key=(lambda row : row[1]))
+        osf_table.sort(key=(lambda row: row[1]))
         return OSFTable(osf_table)
-
-
-
-
-
-

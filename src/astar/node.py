@@ -1,23 +1,35 @@
 from __future__ import annotations
 
-from typing import Tuple
-
-from src.astar.agent import Agent
 from src.astar.state import State
-from src.util.coordinate import Direction
 
 
 class Node:
+    """
+    A* tree search node
+    """
 
-    #__slots__ = 'state', 'cost', 'heuristic', 'value', 'delta_f', 'parent'
+    __slots__ = 'state', 'cost', 'heuristic', 'value', 'delta_f', 'parent'
 
     def __init__(self, state: State, cost: int, heuristic: int, delta_f=0, parent=None):
+        """
+        Constructs a Node instance
+        :param state:       The state that is associated with this node
+        :param cost:        The cost of reaching this node f(n)
+        :param heuristic:   The heuristic h(n) (estimate of cost to reach the goal)
+        :param delta_f:     Δf(n) value. Default value is zero, but this will be increased when the node is expanded.
+        :param parent:      Parent node. Used when finding the path in the final solution
+        """
         self.state: State = state
-        self.cost: int = cost  # f(n)
-        self.heuristic: int = heuristic  # h(n)
+        self.cost: int = cost
+        self.heuristic: int = heuristic
         self.value: int = cost + heuristic  # F(n) - Stored value. Will be larger than cost + heuristic when the node is collapsed
-        self.delta_f = delta_f # Δf(n), starts at 0 and is increased to a higher value when the node is expanded
+        self.delta_f = delta_f
         self.parent: Node = parent
 
     def __lt__(self, other: Node):
+        """
+        Compares this node with another node
+        :param other:   Other node
+        :returns:        True if the other node is less than this node, otherwise false
+        """
         return (self.value, self.heuristic) < (other.value, other.heuristic)

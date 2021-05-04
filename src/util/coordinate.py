@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from enum import Enum
 
 
@@ -9,6 +10,7 @@ class Direction(Enum):
     SOUTH = (0, -1)
     WEST = (-1, 0)
     WAIT = (0, 0)
+
 
 class Coordinate:
     __slots__ = ('x', 'y')

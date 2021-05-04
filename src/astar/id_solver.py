@@ -97,7 +97,8 @@ class IDSolver:
 
         # Combine groups a and b
         group_a.extend(group_b)
-        print(f"Conflict for agents groups {agent_a_id} and {agent_b_id}, combining groups: {str([x.identifier for x in group_a])}")
+        print(
+            f"Conflict for agents groups {agent_a_id} and {agent_b_id}, combining groups: {str([x.identifier for x in group_a])}")
         groups.remove(group_b)
 
         # Try to solve new group
