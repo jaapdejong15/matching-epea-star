@@ -3,7 +3,7 @@ from typing import List
 from mapfmclient import Problem, Solution, MarkedLocation
 
 from src.astar.agent import Agent
-from src.astar.astar import PEAStar
+from src.astar.astar import EPEAStar
 from src.problem.mapf_problem import MAPFProblem
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid
@@ -66,7 +66,7 @@ class IDSolver:
         for group in groups:
             self.grid.agents = group
             problem = MAPFProblem(self.grid)
-            solver = PEAStar(problem, memory_constant=self.memory_constant)
+            solver = EPEAStar(problem)
             agent_path = solver.solve()
             if agent_path is None:
                 raise Exception(f"Agent {group[0].identifier} has no path!")
@@ -103,7 +103,7 @@ class IDSolver:
         # Try to solve new group
         self.grid.agents = group_a
         problem = MAPFProblem(self.grid)
-        solver = PEAStar(problem, memory_constant=self.memory_constant)
+        solver = EPEAStar(problem)
         group_paths = solver.solve()
 
         for agent, path in zip(group_a, group_paths):

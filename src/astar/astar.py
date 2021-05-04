@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from heapq import heappush, heappop
 from typing import List, Optional
 
@@ -39,35 +40,37 @@ class EPEAStar:
         initial_state = State(self.problem.grid.agents)
         self.initial_node = Node(initial_state, len(self.problem.grid.agents), self.problem.heuristic(initial_state))
 
+
     def solve(self) -> Optional[List[Path]]:
         frontier = []
-        """
-        TODO: Replace seen and fully_expanded by dict and expand if:
-          - 
-        """
         seen = set()  # Avoid re-adding states that already have been expanded at least once
         fully_expanded = set()  # Avoid evaluating states that have been fully expanded already
         heappush(frontier, self.initial_node)
 
-        #counter = 0
+        nodes_expanded = 0
+        loop_counter = 0
         while frontier:
             node = heappop(frontier)
+
             if node.state in fully_expanded:
                 continue
+            loop_counter += 1
+
             if self.problem.is_solved(node.state):
-                print(f"Solved! Frontier size: {len(frontier)}, Cost: {node.cost}, OSF time: {self.problem.osf_time / 1000000}ms")
+                print(f"Solved! Frontier size: {len(frontier)}, Seen size: {len(seen)}, Fully expanded: {len(fully_expanded)}")
                 return convert_path(get_path(node))
 
             children, next_value = self.problem.expand(node, node.delta_f)
+            nodes_expanded += 1
             for child in children:
                 if child.state not in seen and child.state != node.state:
+                    seen.add(child.state)
                     heappush(frontier, child)
-
             if next_value == float('inf'):
                 fully_expanded.add(node.state)
             else:
                 node.delta_f = next_value
                 node.value = node.cost + node.heuristic + node.delta_f
                 heappush(frontier, node)
-            seen.add(node.state)
+            #seen.add(node.state)
         return None

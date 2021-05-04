@@ -10,8 +10,8 @@ class Direction(Enum):
     WEST = (-1, 0)
     WAIT = (0, 0)
 
-
 class Coordinate:
+    __slots__ = ('x', 'y')
 
     def __init__(self, x: int, y: int):
         self.x: int = x
@@ -26,3 +26,6 @@ class Coordinate:
 
     def __hash__(self):
         return tuple.__hash__((self.x, self.y))
+
+    def __repr__(self):
+        return f"({self.x}, {self.y})"

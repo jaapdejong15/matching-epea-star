@@ -18,6 +18,9 @@ class BFSNode:
         return self.cost < other.cost
 
 class Grid:
+
+    __slots__ = 'width', 'height', 'grid', 'agents', 'goals', 'colors', 'heuristic'
+
     def __init__(self, width: int, height: int, grid: List[List[int]], agents: List[Agent], goals: List[MarkedLocation]):
         self.width = width
         self.height = height

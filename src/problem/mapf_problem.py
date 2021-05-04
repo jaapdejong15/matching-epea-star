@@ -1,4 +1,3 @@
-import itertools
 import time
 from typing import List, Tuple, NewType, Dict
 
@@ -16,7 +15,8 @@ class MAPFProblem:
     def __init__(self, grid: Grid):
         self.grid = grid
         self.osf: Dict[int, List[List[OSFTable]]] = dict()
-        self.osf_time = 0
+        self.t = 0
+
         for color in grid.colors.keys():
             self.calculate_single_color_osf(color)
 
@@ -27,7 +27,10 @@ class MAPFProblem:
         return False
 
     def is_solved(self, state) -> bool:
-        return all(self.on_goal(agent) for agent in state.agents)
+        solved = all(self.on_goal(agent) for agent in state.agents)
+        if solved:
+            print(f"Operator selection took {self.t*1000} ms")
+        return solved
 
     def expand(self, node: Node, v) -> Tuple[List[Node], int]:
         children, next_value = self.get_children(node, v)
@@ -62,9 +65,16 @@ class MAPFProblem:
             total += self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
         return total
 
-
+    """
+    Applies an operator to a parent node to create a child node
+    :param parent: The parent node
+    :param operator: Tuple of Directions of length #agents
+    :returns: The child node
+    """
     def get_child(self, parent: Node, operator: Tuple[Direction, ...]) -> Node:
+        t1 = time.perf_counter()
         assert len(operator) == len(parent.state.agents)
+
         agents = []
         costs = parent.cost
         for i, agent in enumerate(parent.state.agents):
@@ -78,19 +88,17 @@ class MAPFProblem:
                 costs += 1
             agents.append(Agent(agent.coord.move(operator[i]), agent.color, agent.identifier, waiting_cost=waiting_costs))
 
+        self.t += time.perf_counter() - t1
         child_state = State(agents)
         return Node(child_state, costs, self.heuristic(child_state), parent=parent)
 
     def get_children(self, parent: Node, v: int) -> Tuple[List[Node], int]:
-        # TODO: Cache results? Create algorithm to obtain applicable operators more efficiently than filtering cartesian product?
-        start = time.perf_counter_ns()
         operator_finder = OperatorFinder(v, [self.osf[agent.color][agent.coord.y][agent.coord.x] for agent in parent.state.agents])
 
         operator_finder.find_operators(0, [], 0)
 
         children = [self.get_child(parent, operator) for operator in operator_finder.operators]
-        stop = time.perf_counter_ns()
-        self.osf_time += stop - start
+
         return children, operator_finder.next_target_value
 
     def calculate_single_color_osf(self, color: int) -> None:

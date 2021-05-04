@@ -2,14 +2,11 @@ import subprocess
 
 from mapfmclient import Solution, MapfBenchmarker, Problem
 
-from src.astar.astar import EPEAStar
-
-# TODO: Base C of a formula if not given, e.g. C=#agents
-from src.problem.standard_problem import StandardProblem
+from src.astar.id_solver import IDSolver
 
 def solve(problem: Problem) -> Solution:
-    solver = EPEAStar(StandardProblem(problem))
-    return Solution.from_paths(solver.solve())
+    solver = IDSolver(problem)
+    return solver.solve()
 
 def get_version(is_debug, current_version) -> str:
     if not is_debug:
@@ -19,7 +16,7 @@ def get_version(is_debug, current_version) -> str:
 
 
 if __name__ == '__main__':
-    version = '0.1.1'
+    version = '0.1.2'
     debug = True
     api_token = open('../apitoken.txt', 'r').read().strip()
     benchmarker = MapfBenchmarker(api_token, 16, f"EPEA*", get_version(debug, version), debug, solver=solve,
