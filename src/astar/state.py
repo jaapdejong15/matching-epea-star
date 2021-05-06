@@ -16,4 +16,4 @@ class State:
         return hash(self.agents)
 
     def __repr__(self):
-        return "".join()
+        return self.agents.__repr__()

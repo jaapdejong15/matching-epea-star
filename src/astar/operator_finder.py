@@ -58,6 +58,6 @@ class OperatorFinder:
                 continue
 
             if current_sum + self.max_values[current_agent] < self.target_sum:
-                return
+                continue
             self.find_operators(current_agent + 1, current_operators, current_sum)
             assert self.next_target_value > self.target_sum

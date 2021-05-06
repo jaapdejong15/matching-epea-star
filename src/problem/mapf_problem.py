@@ -1,4 +1,3 @@
-import time
 from typing import List, Tuple, NewType, Dict
 
 from src.astar.agent import Agent

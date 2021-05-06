@@ -62,7 +62,7 @@ class EPEAStar:
 
             # Check if the current state is a solution to the problem
             if self.problem.is_solved(node.state):
-                #print(
+                # print(
                 #    f"Solved! Frontier size: {len(frontier)}, Seen size: {len(seen)}, Fully expanded: {len(fully_expanded)}")
                 return convert_path(get_path(node))
 
