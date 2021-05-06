@@ -1,6 +1,6 @@
 from typing import List, Tuple, Optional
 
-from mapfmclient import Problem, Solution, MarkedLocation
+from mapfmclient import Problem, Solution
 
 from src.astar.agent import Agent
 from src.astar.astar import EPEAStar
@@ -65,16 +65,7 @@ class IDSolver:
         """
         self.paths: List[Path] = []
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
-        original_goals = original.goals
-        goals: List[MarkedLocation] = []
-        for agent in agents:
-            for goal in original.goals:
-                if agent.color == goal.color:
-                    goals.append(goal)
-                    original_goals.remove(goal)
-                    break
-
-        self.grid = Grid(original.width, original.height, original.grid, agents, goals)
+        self.grid = Grid(original.width, original.height, original.grid, agents, original.goals)
 
     def solve(self) -> Solution:
         """
@@ -135,6 +126,7 @@ class IDSolver:
         problem = MAPFProblem(self.grid)
         solver = EPEAStar(problem)
         group_paths = solver.solve()
+        assert group_paths is not None
 
         for agent, path in zip(group_a, group_paths):
             self.paths[agent.identifier] = path

@@ -8,7 +8,10 @@ class OperatorFinder:
     """
     Implements a more efficient way of selecting operators. The speed of this algorithm is crucial for the performance of
     EPEA* since it is executed in every node.
+    TODO: Store max_values with node to avoid recalculating?
     """
+
+    __slots__ = 'operators', 'target_sum', 'agent_operators', 'next_target_value', 'min_values', 'max_values'
 
     def __init__(self, target_sum: int, agent_operators: List[List[Tuple[Direction, int]]]):
         """
@@ -20,13 +23,17 @@ class OperatorFinder:
         self.target_sum = target_sum
         self.agent_operators = agent_operators
         self.next_target_value = float('inf')
+        self.min_values = []
         self.max_values = []
-        s = 0
+        s_min = 0
+        s_max = 0
         for operators in reversed(agent_operators):
-            self.max_values.append(s)
-            s += max(map(lambda x : x[1], operators))
+            self.min_values.append(s_min)
+            self.max_values.append(s_max)
+            s_min += operators[0][1]
+            s_max += operators[-1][1]
+        self.min_values.reverse()
         self.max_values.reverse()
-        #print(f"Values: {agent_operators}\nMax values: {self.max_values}")
 
     def find_operators(self, current_agent: int, previous_operators, previous_sum) -> None:
         """
@@ -42,14 +49,15 @@ class OperatorFinder:
             current_operators = copy(previous_operators)
             current_operators.append(operator[0])
             current_sum = previous_sum + operator[1]
-            if current_sum + self.max_values[current_agent] < self.target_sum:
-                #self.next_target_value = min(self.next_target_value + self.max_values[current_agent], current_sum)
+            if current_sum + self.min_values[current_agent] > self.target_sum:
+                self.next_target_value = min(self.next_target_value, current_sum + self.min_values[current_agent])
                 return
-            if current_sum > self.target_sum:
-                self.next_target_value = min(self.next_target_value, current_sum)
-                return  # Since operators are sorted, there is no need to check the other operators
             if current_agent == len(self.agent_operators) - 1:
                 if current_sum == self.target_sum:
                     self.operators.append(current_operators)
                 continue
+
+            if current_sum + self.max_values[current_agent] < self.target_sum:
+                return
             self.find_operators(current_agent + 1, current_operators, current_sum)
+            assert self.next_target_value > self.target_sum
