@@ -105,7 +105,8 @@ class IDSolver:
             conflict = find_conflict(self.paths)
         return self.paths, self.cost
 
-    def merge_groups(self, groups: List[Tuple[List[Agent], int]], agent_a_id: int, agent_b_id: int) -> Optional[List[Tuple[List[Agent], int]]]:
+    def merge_groups(self, groups: List[Tuple[List[Agent], int]], agent_a_id: int, agent_b_id: int) \
+            -> Optional[List[Tuple[List[Agent], int]]]:
         """
         Merge two groups with agents with conflicting paths
         :param groups:      List of all groups

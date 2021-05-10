@@ -21,7 +21,7 @@ if __name__ == '__main__':
     version = '0.2.1'
     debug = True
     api_token = open('../apitoken.txt', 'r').read().strip()
-    benchmarker = MapfBenchmarker(api_token, 21, f"EPEA* (exhaustive matching)", get_version(debug, version), debug,
+    benchmarker = MapfBenchmarker(api_token, 11, f"EPEA* (exhaustive matching)", get_version(debug, version), debug,
                                   solver=solve,
                                   cores=1)
     benchmarker.run()

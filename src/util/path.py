@@ -2,7 +2,6 @@ from typing import List, Tuple
 
 
 class Path:
-
     __slots__ = 'path', 'identifier'
 
     def __init__(self, path: List[Tuple[int, int]], identifier: int):

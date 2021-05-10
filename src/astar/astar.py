@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from heapq import heappush, heappop
-from numbers import Number
 from typing import List, Optional, Tuple
 
 from src.astar.node import Node

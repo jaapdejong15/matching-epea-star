@@ -14,4 +14,3 @@ class MatchingProblem(MAPFProblem):
 
         grid = Grid(original.width, original.height, original.grid, agents, goals)
         super().__init__(grid)
-
