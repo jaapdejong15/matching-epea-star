@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from heapq import heappush, heappop
-from typing import List, Optional
+from numbers import Number
+from typing import List, Optional, Tuple
 
 from src.astar.node import Node
 from src.astar.state import State
@@ -24,14 +25,15 @@ def convert_path(nodes: List[Node]) -> List[Path]:
         path = []
         for node in nodes:
             path.append((node.state.agents[i].coord.x, node.state.agents[i].coord.y))
-        paths.append(Path(path, nodes[-1].cost, agent.identifier))
+        assert nodes[-1].cost <= len(nodes) * len(nodes[-1].state.agents)
+        paths.append(Path(path, agent.identifier))
     # print(f"Path: {[path.path for path in paths]}")
     return paths
 
 
 class EPEAStar:
 
-    def __init__(self, problem: MAPFProblem):
+    def __init__(self, problem: MAPFProblem, max_cost):
         """
         Constructs an EPEAStar instance
         :param problem: The problem instance that will be solved
@@ -39,8 +41,9 @@ class EPEAStar:
         self.problem = problem
         initial_state = State(self.problem.grid.agents)
         self.initial_node = Node(initial_state, len(self.problem.grid.agents), self.problem.heuristic(initial_state))
+        self.max_cost = max_cost
 
-    def solve(self) -> Optional[List[Path]]:
+    def solve(self) -> Optional[Tuple[List[Path], int]]:
         """
         Solves the problem instance in self.problem
         :return: Path for every agent if a solution was found, otherwise None
@@ -54,6 +57,9 @@ class EPEAStar:
         loop_counter = 0
         while frontier:
             node = heappop(frontier)
+            if node.value >= self.max_cost:
+                # Current solution will not improve existing solution
+                return None
 
             # Don't evaluate node if its state is already fully expanded
             if node.state in fully_expanded:
@@ -64,7 +70,7 @@ class EPEAStar:
             if self.problem.is_solved(node.state):
                 # print(
                 #    f"Solved! Frontier size: {len(frontier)}, Seen size: {len(seen)}, Fully expanded: {len(fully_expanded)}")
-                return convert_path(get_path(node))
+                return convert_path(get_path(node)), node.cost
 
             # Expand the current node
             children, next_value = self.problem.expand(node)

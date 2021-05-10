@@ -2,10 +2,12 @@ from typing import List, Tuple
 
 
 class Path:
-    def __init__(self, path: List[Tuple[int, int]], cost: int, identifier: int):
+
+    __slots__ = 'path', 'identifier'
+
+    def __init__(self, path: List[Tuple[int, int]], identifier: int):
         self.path = path
-        self.cost = cost
-        self.identifier = identifier
+        self.identifier: int = identifier
 
     def __getitem__(self, item):
         return self.path[item]
