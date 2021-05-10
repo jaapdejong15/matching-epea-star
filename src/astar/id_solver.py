@@ -1,11 +1,10 @@
 from typing import List, Tuple, Optional
 
-from mapfmclient import Problem, Solution
+from mapfmclient import Solution
 
 from src.astar.agent import Agent
 from src.astar.astar import EPEAStar
 from src.problem.mapf_problem import MAPFProblem
-from src.util.coordinate import Coordinate
 from src.util.grid import Grid
 from src.util.path import Path
 
@@ -58,21 +57,19 @@ class IDSolver:
     First solve for all agents individually. If paths are conflicting, merge the agents and solve for the new group
     """
 
-    def __init__(self, original: Problem):
+    def __init__(self, original: Grid):
         """
         Constructs an IDSolver instance
         :param original:        Original problem
         """
-        self.paths: List[Path] = []
-        agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
-        self.grid = Grid(original.width, original.height, original.grid, agents, original.goals)
+        self.paths = []
+        self.grid = original
 
-    def solve(self) -> Solution:
+    def solve(self) -> List[Path]:
         """
         Solves the original problem
         :return:    Solution with paths for every agent
         """
-        self.paths = []
         groups = [[agent] for agent in self.grid.agents]
 
         # Solve for every group
@@ -92,7 +89,7 @@ class IDSolver:
             a, b = conflict
             groups = self.merge_groups(groups, a, b)
             conflict = find_conflict(self.paths)
-        return Solution.from_paths(self.paths)
+        return self.paths
 
     def merge_groups(self, groups: List[List[Agent]], agent_a_id: int, agent_b_id: int) -> List[List[Agent]]:
         """

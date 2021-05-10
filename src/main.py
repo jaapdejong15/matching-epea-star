@@ -2,11 +2,11 @@ import subprocess
 
 from mapfmclient import Solution, MapfBenchmarker, Problem
 
-from src.astar.id_solver import IDSolver
+from src.astar.exhaustive_matching_solver import ExhaustiveMatchingSolver
 
 
 def solve(problem: Problem) -> Solution:
-    solver = IDSolver(problem)
+    solver = ExhaustiveMatchingSolver(problem)
     return solver.solve()
 
 
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     version = '0.1.5'
     debug = True
     api_token = open('../apitoken.txt', 'r').read().strip()
-    benchmarker = MapfBenchmarker(api_token, 11, f"EPEA* (heuristic matching)", get_version(debug, version), debug,
+    benchmarker = MapfBenchmarker(api_token, 21, f"EPEA* (exhaustive matching)", get_version(debug, version), debug,
                                   solver=solve,
                                   cores=1)
     benchmarker.run()

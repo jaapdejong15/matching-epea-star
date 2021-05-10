@@ -58,7 +58,7 @@ class Grid:
                 color_heuristic.append(row)
             self.heuristic[key] = color_heuristic
 
-    def __compute_sic_heuristic(self):
+    def __compute_sic_heuristic(self) -> None:
         """
         Computes the Sum of Individual Costs (SIC) heuristic
         """

@@ -24,7 +24,7 @@ def convert_path(nodes: List[Node]) -> List[Path]:
         path = []
         for node in nodes:
             path.append((node.state.agents[i].coord.x, node.state.agents[i].coord.y))
-        paths.append(Path(path, agent.identifier))
+        paths.append(Path(path, nodes[-1].cost, agent.identifier))
     # print(f"Path: {[path.path for path in paths]}")
     return paths
 
