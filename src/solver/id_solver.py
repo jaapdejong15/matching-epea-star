@@ -1,8 +1,8 @@
 from copy import copy
 from typing import List, Tuple, Optional
 
-from src.astar.agent import Agent
-from src.astar.astar import EPEAStar
+from src.solver.agent import Agent
+from src.solver.epeastar import EPEAStar
 from src.problem.mapf_problem import MAPFProblem
 from src.util.grid import Grid
 from src.util.path import Path

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.astar.state import State
+from src.solver.state import State
 
 
 class Node:

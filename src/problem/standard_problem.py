@@ -1,6 +1,6 @@
 from mapfmclient import Problem
 
-from src.astar.agent import Agent
+from src.solver.agent import Agent
 from src.problem.mapf_problem import MAPFProblem
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid

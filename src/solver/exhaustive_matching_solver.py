@@ -3,8 +3,8 @@ from typing import List
 
 from mapfmclient import Problem, MarkedLocation
 
-from src.astar.agent import Agent
-from src.astar.id_solver import IDSolver
+from src.solver.agent import Agent
+from src.solver.id_solver import IDSolver
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid
 from src.util.path import Path
@@ -17,6 +17,7 @@ class ExhaustiveMatchingSolver:
         Constructs the ExhaustiveMatchingSolver object
         :param original:    Original problem that has to be solved.
         """
+        #TODO Sort possible matchings by heuristic
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
         self.grid = Grid(original.width, original.height, original.grid, agents, original.goals)
         self.matches: List[List[MarkedLocation]] = []

@@ -1,9 +1,9 @@
 from typing import List, Tuple, NewType, Dict
 
-from src.astar.agent import Agent
-from src.astar.node import Node
-from src.astar.operator_finder import OperatorFinder
-from src.astar.state import State
+from src.solver.agent import Agent
+from src.solver.node import Node
+from src.solver.operator_finder import OperatorFinder
+from src.solver.state import State
 from src.util.coordinate import Direction
 from src.util.grid import Grid
 

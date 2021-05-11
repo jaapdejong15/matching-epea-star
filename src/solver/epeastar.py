@@ -3,8 +3,8 @@ from __future__ import annotations
 from heapq import heappush, heappop
 from typing import List, Optional, Tuple
 
-from src.astar.node import Node
-from src.astar.state import State
+from src.solver.node import Node
+from src.solver.state import State
 from src.problem.mapf_problem import MAPFProblem
 from src.util.path import Path
 

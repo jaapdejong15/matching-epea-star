@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 from mapfmclient import MarkedLocation
 
-from src.astar.agent import Agent
+from src.solver.agent import Agent
 from src.util.coordinate import Coordinate, Direction
 
 

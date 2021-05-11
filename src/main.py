@@ -2,7 +2,7 @@ import subprocess
 
 from mapfmclient import Solution, MapfBenchmarker, Problem
 
-from src.astar.exhaustive_matching_solver import ExhaustiveMatchingSolver
+from src.solver.exhaustive_matching_solver import ExhaustiveMatchingSolver
 
 
 def solve(problem: Problem) -> Solution:
