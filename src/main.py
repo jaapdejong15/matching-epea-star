@@ -7,7 +7,7 @@ from src.astar.exhaustive_matching_solver import ExhaustiveMatchingSolver
 
 def solve(problem: Problem) -> Solution:
     solver = ExhaustiveMatchingSolver(problem)
-    return solver.solve()
+    return Solution.from_paths(solver.solve())
 
 
 def get_version(is_debug, current_version) -> str:
