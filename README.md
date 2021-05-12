@@ -24,4 +24,4 @@ This is done by collapsing less promising nodes, i.e. with a low `cost+heuristic
 ## EPEA*
 
 # Credits
-Thanks to [Ivar de Bruijn](https://github.com/ivardb) for helping with [ID and A*](https://github.com/ivardb/Astar-OD-ID):
+Thanks to [Ivar de Bruin](https://github.com/ivardb) for helping with [ID and A*](https://github.com/ivardb/Astar-OD-ID):
