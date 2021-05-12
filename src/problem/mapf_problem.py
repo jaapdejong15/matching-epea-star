@@ -1,14 +1,12 @@
-from typing import List, Tuple, NewType, Dict
+from typing import List, Tuple, Dict
 
 from src.solver.agent import Agent
 from src.solver.node import Node
 from src.solver.operator_finder import OperatorFinder
+from src.solver.pdb import SingleColorPDB, PDB
 from src.solver.state import State
 from src.util.coordinate import Direction
 from src.util.grid import Grid
-
-OSFRow = NewType('OSFRow', Tuple[Direction, int])
-OSFTable = NewType('OSFTable', List[OSFRow])
 
 
 class MAPFProblem:
@@ -19,10 +17,11 @@ class MAPFProblem:
         :param grid:    2d grid with starting locations and goals
         """
         self.grid = grid
-        self.osf: Dict[int, List[List[OSFTable]]] = dict()
-
-        for color in grid.colors.keys():
-            self.calculate_single_color_osf(color)
+        self.osf: Dict[int, Tuple[List[int], PDB]] = dict()
+        for color in self.grid.colors:
+            pdb = SingleColorPDB(color, grid)
+            for agent in filter(lambda a: a.color == color, self.grid.agents):
+                self.osf[agent.identifier] = ([agent.identifier], pdb)
 
     def on_goal(self, agent: Agent) -> bool:
         """
@@ -121,53 +120,10 @@ class MAPFProblem:
         :param v:       The Δf value.
         :returns:       List of child nodes and next Δf value for the parent node
         """
-        operator_finder = OperatorFinder(v, [self.osf[agent.color][agent.coord.y][agent.coord.x] for agent in
-                                             parent.state.agents])
-        operator_finder.find_operators(0, [], 0)
+        operator_finder = OperatorFinder(v, [(pdb[0], pdb[1].get(parent)) for pdb in self.osf.values()])
+        operator_finder.find_operators(0, [None] * len(self.grid.agents), 0)
         children = [self.get_child(parent, operator) for operator in operator_finder.operators]
         return children, operator_finder.next_target_value
 
-    def calculate_single_color_osf(self, color: int) -> None:
-        """
-        Precomputes the operator selection function (OSF) for individual agents.
-        Results are stored in self.osf
-        :param color: Color for which OSF components have to be computed
-        """
-        heuristic = self.grid.heuristic[color]
-        single_color_osf: List[List[OSFTable]] = []
-        for y in range(self.grid.height):
-            osf_grid_row = []
-            for x in range(self.grid.width):
-                h = heuristic[y][x]
-                if h != float('inf'):
-                    osf_table = self.generate_osf_table(x, y, h, color)
-                    osf_grid_row.append(osf_table)
-                else:
-                    osf_grid_row.append(OSFTable([]))
-            assert len(osf_grid_row) == self.grid.width
-            single_color_osf.append(osf_grid_row)
+    def merge_pdbs(self):
 
-        assert len(single_color_osf) == self.grid.height
-        self.osf[color] = single_color_osf
-
-    def generate_osf_table(self, x: int, y: int, heuristic: int, color: int) -> OSFTable:
-        """
-        Generates an operator selection function (OSF) table for a single color and vertex in the grid
-        :param x:               x-coordinate of the vertex
-        :param y:               y-coordinate of the vertex
-        :param heuristic:       heuristic for the color at the given (x,y).
-        :param color:           color for the OSF
-        :returns:               OSF table with Δf values for each move, sorted on Δf
-        """
-        osf_table: List[OSFRow] = []
-        for direction in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
-            dx, dy = direction.value
-            new_x: int = x + dx
-            new_y: int = y + dy
-            if self.grid.traversable_coords(new_x, new_y):
-                delta_f: int = 1 + self.grid.heuristic[color][new_y][new_x] - heuristic
-                osf_table.append(OSFRow((direction, delta_f)))
-
-        osf_table.append(OSFRow((Direction.WAIT, 1)))
-        osf_table.sort(key=(lambda row: row[1]))
-        return OSFTable(osf_table)
