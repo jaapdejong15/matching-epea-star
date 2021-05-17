@@ -4,7 +4,6 @@ from mapfmclient import Solution, MapfBenchmarker, Problem
 
 from src.map_generation.map_generator import generate_map
 from src.solver.exhaustive_matching_solver import ExhaustiveMatchingSolver
-from src.util.grid import Grid
 from src.visualizer import visualize
 
 

@@ -133,8 +133,8 @@ class IDSolver:
 
         # Combine groups a and b
         new_agents = group_a[0] + group_b[0]
-        print(
-            f"Conflict for agents groups {agent_a_id} and {agent_b_id}, combining groups: {str([x.identifier for x in new_agents])}")
+        #print(
+        #    f"Conflict for agents groups {agent_a_id} and {agent_b_id}, combining groups: {str([x.identifier for x in new_agents])}")
 
         # Try to solve new group
         self.grid.agents = new_agents

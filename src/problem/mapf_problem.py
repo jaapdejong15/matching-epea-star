@@ -160,6 +160,7 @@ class MAPFProblem:
         :returns:               OSF table with Δf values for each move, sorted on Δf
         """
         osf_table: List[OSFRow] = []
+        # TODO: Group entries with the same value in a single row -> Reduces branching factor in operator_finder
         for direction in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
             dx, dy = direction.value
             new_x: int = x + dx

@@ -24,7 +24,7 @@ class ExhaustiveMatchingSolver:
         self.possible_matches([], 0)
         for agent in agents:
             agent.color = agent.identifier
-        print([[f"({goal.x}, {goal.y}): {goal.color}" for goal in match] for match in self.matches])
+        #print([[f"({goal.x}, {goal.y}): {goal.color}" for goal in match] for match in self.matches])
 
     def possible_matches(self, previous_goals: List[MarkedLocation], current_agent: int) -> None:
         """
@@ -50,18 +50,15 @@ class ExhaustiveMatchingSolver:
         """
         min_cost = float('inf')
         min_solution = None
-        print(f'Num matches: {len(self.matches)}')
+        #print(f'Num matches: {len(self.matches)}')
         for match in self.matches:
-            print(f"Trying match {[(ml.x, ml.y) for ml in match]}")
             # TODO: Calculate goal heuristic only once
             grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
             id_solver = IDSolver(grid, min_cost)
             solution = id_solver.solve()
             if solution is not None:
                 paths, cost = solution
-                print(f"Cost: {cost}")
                 if cost < min_cost:
                     min_cost = cost
                     min_solution = paths
-        print(f"Cost = {min_cost}")
         return min_solution
