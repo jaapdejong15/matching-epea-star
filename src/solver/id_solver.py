@@ -1,8 +1,9 @@
 from copy import copy
+from numbers import Number
 from typing import List, Tuple, Optional
 
-from src.solver.agent import Agent
-from src.solver.epeastar import EPEAStar
+from src.util.agent import Agent
+from src.solver.epeastar.epeastar import EPEAStar
 from src.problem.mapf_problem import MAPFProblem
 from src.util.grid import Grid
 from src.util.path import Path
@@ -56,10 +57,10 @@ class IDSolver:
     First solve for all agents individually. If paths are conflicting, merge the agents and solve for the new group
     """
 
-    def __init__(self, original: Grid, max_value):
+    def __init__(self, original: Grid, max_value = float('inf')):
         """
         Constructs an IDSolver instance
-        :param original:        Original problem
+        :param original:        Grid of the original problem
         :param max_value:       Maximum allowed value of the solver. Stop the solver if the value is exceeded
         """
         self.paths = []
@@ -70,20 +71,22 @@ class IDSolver:
     def solve(self) -> Optional[Tuple[list, int]]:
         """
         Solves the original problem
-        :return:    Solution with paths for every agent
+        :return:    Solution with paths for every agent and the cost of the solution
         """
         agents = copy(self.grid.agents)
-
         groups = []
 
         # Solve for every group
         total_cost = 0
         for agent in agents:
             self.grid.agents = [agent]
-            problem = MAPFProblem(self.grid)
-            solver = EPEAStar(problem, self.max_value)
+            solver = EPEAStar(self.grid, self.max_value)
             agent_path, cost = solver.solve()
             total_cost += cost
+
+            # Return if max_value is exceeded
+            if total_cost >= self.max_value:
+                return None
             groups.append(([agent], cost))
             if agent_path is None:
                 raise Exception(f"Agent {agents[0].identifier} has no path!")
@@ -91,11 +94,9 @@ class IDSolver:
                 assert len(agent_path) == 1
                 self.paths.append(agent_path[0])
 
-        if total_cost >= self.max_value:
-            return None
-
         self.cost = total_cost
 
+        # Find and resolve conflicts until solution is conflict-free
         conflict = find_conflict(self.paths)
         while conflict is not None:
             a, b = conflict
@@ -133,13 +134,10 @@ class IDSolver:
 
         # Combine groups a and b
         new_agents = group_a[0] + group_b[0]
-        #print(
-        #    f"Conflict for agents groups {agent_a_id} and {agent_b_id}, combining groups: {str([x.identifier for x in new_agents])}")
 
         # Try to solve new group
         self.grid.agents = new_agents
-        problem = MAPFProblem(self.grid)
-        solver = EPEAStar(problem, self.max_value)
+        solver = EPEAStar(self.grid, self.max_value)
 
         solution = solver.solve()
         if solution is None:

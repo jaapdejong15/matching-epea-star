@@ -3,13 +3,13 @@ import subprocess
 from mapfmclient import Solution, MapfBenchmarker, Problem, ProgressiveDescriptor, BenchmarkDescriptor
 
 from src.map_generation.map_generator import generate_map
-from src.solver.exhaustive_matching_solver import ExhaustiveMatchingSolver
+from src.solver.algorithm_descriptor import AlgorithmDescriptor, Algorithm
+from src.solver.matching_solver.exhaustive_matching_solver import ExhaustiveMatchingSolver
+from src.solver.solver import Solver
 from src.visualizer import visualize
 
-problem_cache_size = 100
-
-def solve(problem: Problem) -> Solution:
-    solver = ExhaustiveMatchingSolver(problem, problem_cache_size)
+def solve(problem: Problem, algorithm: AlgorithmDescriptor) -> Solution:
+    solver = Solver(problem, algorithm)
     return Solution.from_paths(solver.solve())
 
 
@@ -20,7 +20,7 @@ def get_version(is_debug, current_version) -> str:
     return f"{git_hash}"
 
 def run_online_benchmarker():
-    version = '0.2.3'
+    version = '1.0.0'
     debug = True
     api_token = open('../apitoken.txt', 'r').read().strip()
     progressive_descriptor = ProgressiveDescriptor(
@@ -28,8 +28,10 @@ def run_online_benchmarker():
         max_agents=5,
         num_teams=2
     )
-    benchmarker = MapfBenchmarker(api_token, BenchmarkDescriptor(1, progressive_descriptor), f"EPEA* (exhaustive matching)", get_version(debug, version), debug,
-                                  solver=solve,
+    algorithm_descriptor = AlgorithmDescriptor(Algorithm.ExhaustiveMatching,
+                                               independence_detection=False)
+    benchmarker = MapfBenchmarker(api_token, BenchmarkDescriptor(15), algorithm_descriptor.get_name(), get_version(debug, version), debug,
+                                  solver=lambda problem: solve(problem, algorithm_descriptor),
                                   cores=1)
     benchmarker.run()
 

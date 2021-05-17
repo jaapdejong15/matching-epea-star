@@ -6,7 +6,7 @@ from func_timeout import func_timeout, FunctionTimedOut
 from mapfmclient import Problem, Solution
 
 from src.map_generation.map_parser import MapParser
-from src.solver.exhaustive_matching_solver import ExhaustiveMatchingSolver
+from src.solver.matching_solver.exhaustive_matching_solver import ExhaustiveMatchingSolver
 
 
 class MapRunner:

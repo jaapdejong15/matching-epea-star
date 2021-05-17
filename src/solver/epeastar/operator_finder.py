@@ -19,7 +19,7 @@ class OperatorFinder:
         :param target_sum:      Target value to reach
         :param agent_operators: List of operators with their delta value for each agent
         """
-        self.operators: List[List[Direction]] = []
+        self.operators: List[List[List[Direction]]] = []
         self.target_sum = target_sum
         self.agent_operators = agent_operators
         self.next_target_value = float('inf')

@@ -6,7 +6,8 @@ from typing import List
 from heapq import heappush, heappop, heappushpop
 from mapfmclient import Problem, MarkedLocation
 
-from src.solver.agent import Agent
+from src.solver.epeastar.epeastar import EPEAStar
+from src.util.agent import Agent
 from src.solver.id_solver import IDSolver
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid
@@ -17,6 +18,7 @@ class Matching:
     def __init__(self, grid: Grid):
         self.grid = grid
         self.initial_heuristic = 0
+
         for agent in self.grid.agents:
             self.initial_heuristic += grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
 
@@ -25,12 +27,18 @@ class Matching:
 
 class ExhaustiveMatchingSolver:
 
-    def __init__(self, original: Problem, num_stored_problems):
+    def __init__(self,
+                 original: Problem,
+                 num_stored_problems: int = 0,
+                 sorting: bool = False,
+                 independence_detection: bool = True):
         """
         Constructs the ExhaustiveMatchingSolver object
         :param original:    Original problem that has to be solved.
         """
         self.num_stored_problems = num_stored_problems
+        self.sorting = sorting
+        self.independence_detection = independence_detection
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
         self.grid = Grid(original.width, original.height, original.grid, agents, original.goals)
         self.matches: List[List[MarkedLocation]] = []
@@ -61,7 +69,10 @@ class ExhaustiveMatchingSolver:
         Finds an optimal solution to the problem provided in the constructor.
         :return:    List of paths of the optimal solution
         """
-        return self.sort_before_solve()
+        if self.sorting:
+            return self.sort_before_solve()
+        else:
+            return self.default_solve()
 
 
     def sort_before_solve(self) -> List[Path]:
@@ -93,8 +104,11 @@ class ExhaustiveMatchingSolver:
             next_matching = heappushpop(match_pq, Matching(grid))
 
             # Solve problem
-            id_solver = IDSolver(next_matching.grid, min_cost)
-            solution = id_solver.solve()
+            if self.independence_detection:
+                solver = IDSolver(next_matching.grid, min_cost)
+            else:
+                solver = EPEAStar(next_matching.grid, min_cost)
+            solution = solver.solve()
             if solution is not None:
                 paths, cost = solution
                 if cost < min_cost:
@@ -123,8 +137,11 @@ class ExhaustiveMatchingSolver:
         for match in self.matches:
            # TODO: Calculate goal heuristic only once
            grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
-           id_solver = IDSolver(grid, min_cost)
-           solution = id_solver.solve()
+           if self.independence_detection:
+               solver = IDSolver(grid, min_cost)
+           else:
+               solver = EPEAStar(grid, min_cost)
+           solution = solver.solve()
            if solution is not None:
                paths, cost = solution
                if cost < min_cost:

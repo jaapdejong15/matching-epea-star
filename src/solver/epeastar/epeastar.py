@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from heapq import heappush, heappop
+from numbers import Number
 from typing import List, Optional, Tuple
 
-from src.solver.node import Node
-from src.solver.state import State
+from src.util.node import Node
+from src.util.state import State
 from src.problem.mapf_problem import MAPFProblem
+from src.util.grid import Grid
 from src.util.path import Path
 
 
@@ -32,12 +34,13 @@ def convert_path(nodes: List[Node]) -> List[Path]:
 
 class EPEAStar:
 
-    def __init__(self, problem: MAPFProblem, max_cost):
+    def __init__(self, grid: Grid, max_cost: Number = float('inf')):
         """
-        Constructs an EPEAStar instance
-        :param problem: The problem instance that will be solved
+        Constructs an EPEAStar instance.
+        :param grid: The grid instance for the problem that will be solved.
+        :param max_cost: The maximum cost of the solution. Stop the solver if exceeded.
         """
-        self.problem = problem
+        self.problem = MAPFProblem(grid)
         initial_state = State(self.problem.grid.agents)
         self.initial_node = Node(initial_state, len(self.problem.grid.agents), self.problem.heuristic(initial_state))
         self.max_cost = max_cost

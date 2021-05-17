@@ -1,6 +1,6 @@
 from typing import List
 
-from src.solver.agent import Agent
+from src.util.agent import Agent
 
 
 class State:
