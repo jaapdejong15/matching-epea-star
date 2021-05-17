@@ -137,7 +137,7 @@ class IDSolver:
 
         # Try to solve new group
         self.grid.agents = new_agents
-        solver = EPEAStar(self.grid, self.max_value)
+        solver = EPEAStar(self.grid, self.max_value - self.cost)
 
         solution = solver.solve()
         if solution is None:
