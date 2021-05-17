@@ -1,10 +1,8 @@
 from copy import copy
-from numbers import Number
 from typing import List, Tuple, Optional
 
-from src.util.agent import Agent
 from src.solver.epeastar.epeastar import EPEAStar
-from src.problem.mapf_problem import MAPFProblem
+from src.util.agent import Agent
 from src.util.grid import Grid
 from src.util.path import Path
 
@@ -40,7 +38,7 @@ def check_conflicts(path1: Path, path2: Path) -> bool:
 
 def find_conflict(paths: List[Path]) -> Optional[Tuple[int, int]]:
     """
-
+    Checks if there are vertex and edge conflicts between paths
     :param paths:   Paths to check conflicts with
     :return:        Agent identifiers of first conflicting paths
     """
@@ -57,7 +55,7 @@ class IDSolver:
     First solve for all agents individually. If paths are conflicting, merge the agents and solve for the new group
     """
 
-    def __init__(self, original: Grid, max_value = float('inf')):
+    def __init__(self, original: Grid, max_value=float('inf')):
         """
         Constructs an IDSolver instance
         :param original:        Grid of the original problem
@@ -77,22 +75,23 @@ class IDSolver:
         groups = []
 
         # Solve for every group
-        total_cost = 0
+        total_cost = sum(self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x] for agent in self.grid.agents)
         for agent in agents:
             self.grid.agents = [agent]
-            solver = EPEAStar(self.grid, self.max_value)
-            agent_path, cost = solver.solve()
+            total_cost -= self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
+            solver = EPEAStar(self.grid, self.max_value - total_cost)
+            solution = solver.solve()
+            if solution is None:
+                return None
+            agent_path, cost = solution
             total_cost += cost
 
             # Return if max_value is exceeded
             if total_cost >= self.max_value:
                 return None
             groups.append(([agent], cost))
-            if agent_path is None:
-                raise Exception(f"Agent {agents[0].identifier} has no path!")
-            else:
-                assert len(agent_path) == 1
-                self.paths.append(agent_path[0])
+
+            self.paths.append(agent_path[0])
 
         self.cost = total_cost
 

@@ -1,21 +1,31 @@
 from __future__ import annotations
 
 from copy import copy
-from typing import List
-
 from heapq import heappush, heappop, heappushpop
+from typing import List, Iterator
+
 from mapfmclient import Problem, MarkedLocation
 
 from src.solver.epeastar.epeastar import EPEAStar
+from src.solver.epeastar.independence_detection import IDSolver
 from src.util.agent import Agent
-from src.solver.id_solver import IDSolver
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid
 from src.util.path import Path
 
 
 class Matching:
+    """
+    Represents a matching. Contains a MAPF-grid and an initial heuristic
+    """
+
+    __slots__ = 'grid', 'initial_heuristic'
+
     def __init__(self, grid: Grid):
+        """
+        Creates a matching from the grid
+        :param grid:    Grid
+        """
         self.grid = grid
         self.initial_heuristic = 0
 
@@ -23,9 +33,29 @@ class Matching:
             self.initial_heuristic += grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
 
     def __lt__(self, other: Matching) -> bool:
+        """
+        Allows matchings to be sorted/heapified by their initial heuristic
+        :param other:   Matching to compare with
+        :return:        True if this matching has a lower initial heuristic
+        """
         return self.initial_heuristic < other.initial_heuristic
 
+
 class ExhaustiveMatchingSolver:
+    """
+    Solves an algorithm using exhaustive matching. There are two versions.
+    In both versions, all matchings are generated.
+
+    In normal exhaustive matching, the matchings are evaluated in their normal order.
+    The solver keeps track of the lowest cost and the underlying MAPF solvers terminate immediately
+    once that cost is exceeded.
+
+    In sorted exhaustive matchings, the solver first generates a grid and calculates the initial heuristic of the
+    matching. The matchings are then heapified and evaluated one by one.
+    This forces the solver to use the most promising matchings first, which will likely result in a lower minimum cost
+    earlier in the process. As a result, the runtime of the underlying solvers for later algorithms is decreased because
+    they can stop earlier
+    """
 
     def __init__(self,
                  original: Problem,
@@ -70,15 +100,14 @@ class ExhaustiveMatchingSolver:
         :return:    List of paths of the optimal solution
         """
         if self.sorting:
-            return self.sort_before_solve()
+            return self.sorting_solve()
         else:
             return self.default_solve()
 
-
-    def sort_before_solve(self) -> List[Path]:
+    def sorting_solve(self) -> List[Path]:
         """
-        Creates grids for a certain number of problems
-        :return:
+        Creates grids for a certain number of problems and solves the problems one by one to find the best solution
+        :return:    A path for every agent
         """
         match_iterator = iter(self.matches)
 
@@ -103,6 +132,12 @@ class ExhaustiveMatchingSolver:
             # Retrieve best matching from PQ and add new matching
             next_matching = heappushpop(match_pq, Matching(grid))
 
+            # If the initial heuristic is not able to improve the cost, the entire PQ will not be able to,
+            # since this is the matching with the lowest initial heuristic in the PQ
+            if next_matching.initial_heuristic >= min_cost:
+                # Reset and fill match_pq:
+                match_pq = self.fill_pq(match_iterator)
+
             # Solve problem
             if self.independence_detection:
                 solver = IDSolver(next_matching.grid, min_cost)
@@ -119,6 +154,11 @@ class ExhaustiveMatchingSolver:
         while len(match_pq) > 0:
             next_matching = heappop(match_pq)
 
+            # At this point all matches are in the PQ.
+            # If the match with the best initial heuristic doesn't improve the cost then nothing will.
+            if next_matching.initial_heuristic >= min_cost:
+                return min_solution
+
             # Solve problem
             id_solver = IDSolver(next_matching.grid, min_cost)
             solution = id_solver.solve()
@@ -129,22 +169,45 @@ class ExhaustiveMatchingSolver:
                     min_solution = paths
         return min_solution
 
+    def fill_pq(self, matching_iterator: Iterator[List[MarkedLocation]]):
+        """
+        Fills a priority queue with matchings
+        :param matching_iterator:   Iterator for matchings
+        :return:                    Heapified list of matchings, sorted on initial heuristic
+        """
+        match_pq = []
+        for _ in range(self.num_stored_problems):
+            match = next(matching_iterator, None)
+            if match is not None:
+                grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
+                heappush(match_pq, Matching(grid))
+            else:
+                break
+        return match_pq
 
-    def default_solve(self):
+    def default_solve(self) -> List[Path]:
+        """
+        Solves the problem by going through all matching in the normal way
+        :return:    A path for every agent
+        """
         min_cost = float('inf')
         min_solution = None
 
         for match in self.matches:
-           # TODO: Calculate goal heuristic only once
-           grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
-           if self.independence_detection:
-               solver = IDSolver(grid, min_cost)
-           else:
-               solver = EPEAStar(grid, min_cost)
-           solution = solver.solve()
-           if solution is not None:
-               paths, cost = solution
-               if cost < min_cost:
-                   min_cost = cost
-                   min_solution = paths
+            # TODO: Calculate goal heuristic only once
+            grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
+
+            if self.independence_detection:
+                solver = IDSolver(grid, min_cost)
+            else:
+                solver = EPEAStar(grid, min_cost)
+
+            solution = solver.solve()
+
+            # If the solver did not terminate early, update minimum solution and cost
+            if solution is not None:
+                paths, cost = solution
+                if cost < min_cost:
+                    min_cost = cost
+                    min_solution = paths
         return min_solution

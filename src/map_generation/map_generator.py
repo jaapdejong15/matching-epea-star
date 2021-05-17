@@ -1,13 +1,13 @@
 import random
-from numbers import Number
 from collections import deque
-from typing import List, Tuple
+from numbers import Number
 from random import randint, uniform
+from typing import List, Tuple
 
 from mapfmclient import Problem, MarkedLocation
 
-from src.util.coordinate import Coordinate, Direction
-
+from src.util.coordinate import Coordinate
+from src.util.direction import Direction
 
 
 def map_printer(grid: List[List[int]]):
@@ -15,6 +15,7 @@ def map_printer(grid: List[List[int]]):
     for y in range(len(grid)):
         print('██' + ''.join(['  ' if pos == 0 else '██' for pos in grid[y]]) + '██')
     print('██' * (len(grid[0]) + 2))
+
 
 def generate_map(width: int,
                  height: int,
@@ -30,10 +31,12 @@ def generate_map(width: int,
         count_traversable = 0
         for y in range(height):
             count_traversable += width - sum(grid[y])
-        if count_traversable < (open_factor * width * height * 0.25 * max_neighbors) or num_3neighbors(grid) < sum(num_agents) - 1:
+        if count_traversable < (open_factor * width * height * 0.25 * max_neighbors) or num_3neighbors(grid) < sum(
+                num_agents) - 1:
             print("Not enough traversable cells or not solvable, running again!")
         else:
-            starts, goals = generate_agent_positions(grid, width, height, num_agents, min_goal_distance, max_goal_distance)
+            starts, goals = generate_agent_positions(grid, width, height, num_agents, min_goal_distance,
+                                                     max_goal_distance)
             start_locations: List[MarkedLocation] = []
             goal_locations: List[MarkedLocation] = []
 
@@ -45,6 +48,7 @@ def generate_map(width: int,
                     i += 1
             random.shuffle(goal_locations)
             return Problem(width=width, height=height, grid=grid, starts=start_locations, goals=goal_locations)
+
 
 def generate_agent_positions(grid: List[List[int]],
                              width: int,
@@ -67,15 +71,15 @@ def generate_agent_positions(grid: List[List[int]],
 
     for agent in agent_positions:
         queue = deque()
-        queue.append((agent,0))
+        queue.append((agent, 0))
         distances, m = compute_heuristic(queue, grid)
         possible_locations = []
         while len(possible_locations) == 0:
             distance = random.randint(int(m * min_distance), int(m * max_distance))
             for y, row in enumerate(distances):
                 for x, value in enumerate(row):
-                    if value == distance and Coordinate(x,y) not in goal_positions:
-                        possible_locations.append(Coordinate(x,y))
+                    if value == distance and Coordinate(x, y) not in goal_positions:
+                        possible_locations.append(Coordinate(x, y))
 
         goal_positions.append(random.choice(possible_locations))
 
@@ -99,6 +103,7 @@ def num_3neighbors(grid: List[List[int]]) -> int:
                 res += 1
     return res
 
+
 def compute_heuristic(queue: deque, grid: List[List[int]]) -> Tuple[List[List[Number]], int]:
     visited = set()
     heuristic = [[float('inf') for _ in range(len(grid[0]))] for _ in range(len(grid))]
@@ -120,6 +125,7 @@ def compute_heuristic(queue: deque, grid: List[List[int]]) -> Tuple[List[List[Nu
                 queue.append((neighbor, dist + 1))
     return heuristic, m
 
+
 def get_neighbors(grid: List[List[int]], coords: Coordinate):
     res = list()
     for d in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
@@ -127,6 +133,7 @@ def get_neighbors(grid: List[List[int]], coords: Coordinate):
         if 0 <= new_coord.y < len(grid) and 0 <= new_coord.x < len(grid[0]) and grid[new_coord.y][new_coord.x] == 0:
             res.append(new_coord)
     return res
+
 
 def generate_maze(width: int, height: int, open_factor: float, max_neighbors: int) -> List[List[int]]:
     grid: List[List[int]] = []
@@ -163,6 +170,7 @@ def generate_maze(width: int, height: int, open_factor: float, max_neighbors: in
                         frontier.append(Coordinate(new_x, new_y))
     return grid
 
+
 def store_map(name: str, folder: str, problem: Problem):
     with open(f'../../maps/{folder}/{name}.map', 'w') as f:
         f.write(f'width {problem.width}\n')
@@ -181,6 +189,7 @@ def store_map(name: str, folder: str, problem: Problem):
 
         for goal in problem.goals:
             f.write(f'{goal.x} {goal.y} {goal.color}\n')
+
 
 def generate_batch(name: str,
                    folder: str,
@@ -202,10 +211,11 @@ def generate_batch(name: str,
         filename = f'{name}-{i}'
         store_map(filename, folder, problem)
 
+
 if __name__ == '__main__':
     generate_batch('test', 'test',
                    amount=10,
                    width=20,
                    height=20,
-                   num_agents=[2,3] #Team of 2 agents and a team of 3 agents
+                   num_agents=[2, 3]  # Team of 2 agents and a team of 3 agents
                    )

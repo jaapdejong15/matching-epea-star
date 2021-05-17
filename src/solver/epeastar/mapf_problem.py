@@ -1,12 +1,12 @@
 import itertools
 from typing import List, Tuple, NewType, Dict
 
-from src.util.agent import Agent
-from src.util.node import Node
 from src.solver.epeastar.operator_finder import OperatorFinder
-from src.util.state import State
-from src.util.coordinate import Direction
+from src.util.agent import Agent
+from src.util.direction import Direction
 from src.util.grid import Grid
+from src.util.node import Node
+from src.util.state import State
 
 OSFRow = NewType('OSFRow', Tuple[List[Direction], int])
 OSFTable = NewType('OSFTable', List[OSFRow])
@@ -154,8 +154,6 @@ class MAPFProblem:
         for operator in operator_finder.operators:
             expanded_operators += list(itertools.product(*operator))
 
-
-
         children = [self.get_child(parent, operator) for operator in expanded_operators]
         return children, operator_finder.next_target_value
 
@@ -201,6 +199,5 @@ class MAPFProblem:
                 expanded_table.append((direction, delta_f))
 
         expanded_table.append((Direction.WAIT, 1))
-        expanded_table.sort(key=(lambda row: row[1])) # Sorting is very important for the algorithm in operator_finder
+        expanded_table.sort(key=(lambda row: row[1]))  # Sorting is very important for the algorithm in operator_finder
         return OSFTable(collapse_osf_table(expanded_table))
-

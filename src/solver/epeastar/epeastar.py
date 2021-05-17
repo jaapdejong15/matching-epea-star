@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from heapq import heappush, heappop
-from numbers import Number
 from typing import List, Optional, Tuple
 
-from src.util.node import Node
-from src.util.state import State
-from src.problem.mapf_problem import MAPFProblem
+from src.solver.epeastar.mapf_problem import MAPFProblem
 from src.util.grid import Grid
+from src.util.node import Node
 from src.util.path import Path
+from src.util.state import State
 
 
 def get_path(node: Node) -> List[Node]:
@@ -28,13 +27,12 @@ def convert_path(nodes: List[Node]) -> List[Path]:
             path.append((node.state.agents[i].coord.x, node.state.agents[i].coord.y))
         assert nodes[-1].cost <= len(nodes) * len(nodes[-1].state.agents)
         paths.append(Path(path, agent.identifier))
-    # print(f"Path: {[path.path for path in paths]}")
     return paths
 
 
 class EPEAStar:
 
-    def __init__(self, grid: Grid, max_cost: Number = float('inf')):
+    def __init__(self, grid: Grid, max_cost=float('inf')):
         """
         Constructs an EPEAStar instance.
         :param grid: The grid instance for the problem that will be solved.
@@ -70,8 +68,6 @@ class EPEAStar:
 
             # Check if the current state is a solution to the problem
             if self.problem.is_solved(node.state):
-                # print(
-                #    f"Solved! Frontier size: {len(frontier)}, Seen size: {len(seen)}, Fully expanded: {len(fully_expanded)}")
                 return convert_path(get_path(node)), node.cost
 
             # Expand the current node

@@ -1,7 +1,7 @@
 from copy import copy
 from typing import List, Tuple
 
-from src.util.coordinate import Direction
+from src.util.direction import Direction
 
 
 class OperatorFinder:
@@ -52,15 +52,22 @@ class OperatorFinder:
             current_operators = copy(previous_operators)
             current_operators.append(operator[0])
             current_sum = previous_sum + operator[1]
+
+            # If the minimum possible value is larger than the target value, return and update the next target value
             if current_sum + self.min_values[current_agent] > self.target_sum:
                 self.next_target_value = min(self.next_target_value, current_sum + self.min_values[current_agent])
                 return
+
+            # If this is the bottom of the recursive tree, check if the target sum is reached
             if current_agent == len(self.agent_operators) - 1:
                 if current_sum == self.target_sum:
                     self.operators.append(current_operators)
                 continue
 
+            # If the maximum possible value is smaller than the target value, do not go deeper in recursion
             if current_sum + self.max_values[current_agent] < self.target_sum:
                 continue
+
+            # Find assignments for remaining agents
             self.find_operators(current_agent + 1, current_operators, current_sum)
             assert self.next_target_value > self.target_sum

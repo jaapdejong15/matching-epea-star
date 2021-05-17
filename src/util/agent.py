@@ -2,7 +2,7 @@ from src.util.coordinate import Coordinate
 
 
 class Agent:
-    __slots__ = ('coord', 'color', 'identifier', 'waiting_cost')
+    __slots__ = 'coord', 'color', 'identifier', 'waiting_cost'
 
     def __init__(self, coord: Coordinate, color, identifier, waiting_cost=0):
         self.coord = coord

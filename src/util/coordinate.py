@@ -1,19 +1,11 @@
 from __future__ import annotations
 
-from enum import Enum
 
-
-class Direction(Enum):
-    # (dx, dy)
-    NORTH = (0, 1)
-    EAST = (1, 0)
-    SOUTH = (0, -1)
-    WEST = (-1, 0)
-    WAIT = (0, 0)
+# from src.util.direction import Direction
 
 
 class Coordinate:
-    __slots__ = ('x', 'y')
+    __slots__ = 'x', 'y'
 
     def __init__(self, x: int, y: int):
         self.x: int = x

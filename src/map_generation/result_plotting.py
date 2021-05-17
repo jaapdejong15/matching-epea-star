@@ -1,4 +1,5 @@
 from typing import List
+
 from matplotlib import pyplot as plt
 
 
@@ -14,14 +15,15 @@ def get_data(name: str, num_teams: int) -> List[List[float]]:
             data[team - 1].append(value)
     return data
 
+
 def line_plot(data: List[List[float]]):
-    font = {'fontname':'Consolas'}
+    font = {'fontname': 'Consolas'}
     fig = plt.figure()
     fig.patch.set_facecolor('#D9D9D9')
 
     x = range(1, len(data[0]) + 1)
     for i, row in enumerate(data):
-        plt.plot(x, row, label=f'{i+1} team{"" if i+1 == 1 else "s"}')
+        plt.plot(x, row, label=f'{i + 1} team{"" if i + 1 == 1 else "s"}')
 
     plt.title('Exhaustive matching performance for different amounts of teams', font)
     plt.xlabel('Number of agents', font)

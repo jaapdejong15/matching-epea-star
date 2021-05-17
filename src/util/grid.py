@@ -4,18 +4,40 @@ from typing import List, Dict, Any
 from mapfmclient import MarkedLocation
 
 from src.util.agent import Agent
-from src.util.coordinate import Coordinate, Direction
+from src.util.coordinate import Coordinate
+from src.util.direction import Direction
 
 
 class BFSNode:
+    """
+    Node used for breadth-first search
+    """
+
+    __slots__ = 'pos', 'cost'
+
     def __init__(self, pos: Coordinate, cost: int):
+        """
+        Constructs a BFSNode instance
+        :param pos:     Position coordinate
+        :param cost:    Cost of reaching the position
+        """
         self.pos = pos
         self.cost = cost
 
     def __eq__(self, other):
+        """
+        Returns whether this node equals the other node
+        :param other:   Node to compare with
+        :return:        True if equal, False otherwise
+        """
         return self.pos == other.pos and self.cost == other.cost
 
     def __lt__(self, other):
+        """
+        Returns whether this node has a lower cost than the other node. This allows nodes to be sorted on cost.
+        :param other:   Other node
+        :return:        True if this node has a lower cost than the other node, False otherwise
+        """
         return self.cost < other.cost
 
 

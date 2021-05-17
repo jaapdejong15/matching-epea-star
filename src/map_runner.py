@@ -6,18 +6,48 @@ from func_timeout import func_timeout, FunctionTimedOut
 from mapfmclient import Problem, Solution
 
 from src.map_generation.map_parser import MapParser
-from src.solver.matching_solver.exhaustive_matching_solver import ExhaustiveMatchingSolver
+from src.solver.algorithm_descriptor import AlgorithmDescriptor, Algorithm
+from src.solver.solver import Solver
+
+
+def solve(starting_problem: Problem) -> Optional[Solution]:
+    """
+    Solves the given problem
+    :param starting_problem:    Problem
+    :return:                    Solution if it was found
+    """
+    problem = starting_problem
+    algorithm = AlgorithmDescriptor(Algorithm.ExhaustiveMatchingSorting, independence_detection=True)
+    solver = Solver(problem, algorithm)
+    solution = solver.solve()
+    if solution is None:
+        print("Failed to find solution")
+        return None
+    return Solution.from_paths(solution)
 
 
 class MapRunner:
+    """
+    Runs the algorithm on a batch of problems
+    """
 
     def __init__(self, map_root):
+        """
+        Constructs a MapRunner instance
+        :param map_root:    Root folder of the batch problem locations
+        """
         self.map_root = map_root
         self.map_parser = MapParser(map_root)
 
     def timeout(self, current_problem: Problem, time) -> Optional[Solution]:
+        """
+        Tries to solve the problem within the timeout
+        :param current_problem:     Problem
+        :param time:                Timeout time
+        :return:                    Solution if it was found
+        """
         try:
-            sol = func_timeout(time, self.solve, args=(current_problem,))
+            sol = func_timeout(time, solve, args=(current_problem,))
 
         except FunctionTimedOut:
             sol = None
@@ -26,31 +56,23 @@ class MapRunner:
             return None
         return sol
 
-    def solve(self, starting_problem: Problem) -> Optional[Solution]:
-        #print()
-        problem = starting_problem
-        solver = ExhaustiveMatchingSolver(problem)
-        solution = solver.solve()
-        if solution is None:
-            print("Failed to find solution")
-            return None
-        return Solution.from_paths(solution)
-
-    def test_generated(self, time, folder, cores=1):
-        problems = self.map_parser.parse_batch(folder)
+    def test_generated(self, time, problem_folder) -> float:
+        """
+        Run the algorithm on a batch of problems
+        :param time:            Timeout for the problems
+        :param problem_folder:  Location of the problem batch
+        :return:                Fraction of problems solved within timeout
+        """
+        problems = self.map_parser.parse_batch(problem_folder)
         solved = 0
         run = 0
 
         for i, problem in enumerate(problems):
-            #print(f"Testing: {folder} Run: {i + 1}/{len(problems)}, Solved: {solved}/{run}")
             solution = self.timeout(problem, time)
             run += 1
             if solution is not None:
-                #print("Solved")
                 solved += 1
-            #else:
-            #    print("Failed")
-        return solved/run
+        return solved / run
 
 
 if __name__ == "__main__":
