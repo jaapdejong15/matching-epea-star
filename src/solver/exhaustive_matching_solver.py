@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from copy import copy
 from typing import List
 
+from heapq import heappush, heappop, heappushpop
 from mapfmclient import Problem, MarkedLocation
 
 from src.solver.agent import Agent
@@ -10,21 +13,31 @@ from src.util.grid import Grid
 from src.util.path import Path
 
 
+class Matching:
+    def __init__(self, grid: Grid):
+        self.grid = grid
+        self.initial_heuristic = 0
+        for agent in self.grid.agents:
+            self.initial_heuristic += grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
+
+    def __lt__(self, other: Matching) -> bool:
+        return self.initial_heuristic < other.initial_heuristic
+
 class ExhaustiveMatchingSolver:
 
-    def __init__(self, original: Problem):
+    def __init__(self, original: Problem, num_stored_problems):
         """
         Constructs the ExhaustiveMatchingSolver object
         :param original:    Original problem that has to be solved.
         """
-        #TODO Sort possible matchings by heuristic
+        self.num_stored_problems = num_stored_problems
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
         self.grid = Grid(original.width, original.height, original.grid, agents, original.goals)
         self.matches: List[List[MarkedLocation]] = []
         self.possible_matches([], 0)
+
         for agent in agents:
             agent.color = agent.identifier
-        #print([[f"({goal.x}, {goal.y}): {goal.color}" for goal in match] for match in self.matches])
 
     def possible_matches(self, previous_goals: List[MarkedLocation], current_agent: int) -> None:
         """
@@ -48,17 +61,73 @@ class ExhaustiveMatchingSolver:
         Finds an optimal solution to the problem provided in the constructor.
         :return:    List of paths of the optimal solution
         """
+        return self.sort_before_solve()
+
+
+    def sort_before_solve(self) -> List[Path]:
+        """
+        Creates grids for a certain number of problems
+        :return:
+        """
+        match_iterator = iter(self.matches)
+
         min_cost = float('inf')
         min_solution = None
-        #print(f'Num matches: {len(self.matches)}')
-        for match in self.matches:
-            # TODO: Calculate goal heuristic only once
+
+        match_pq = []
+
+        # Fill the priority queue
+        for _ in range(self.num_stored_problems):
+            match = next(match_iterator, None)
+            if match is not None:
+                grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
+                heappush(match_pq, Matching(grid))
+            else:
+                break
+
+        # Evaluate the best matchings while keeping the PQ filled
+        for match in match_iterator:
             grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
-            id_solver = IDSolver(grid, min_cost)
+
+            # Retrieve best matching from PQ and add new matching
+            next_matching = heappushpop(match_pq, Matching(grid))
+
+            # Solve problem
+            id_solver = IDSolver(next_matching.grid, min_cost)
             solution = id_solver.solve()
             if solution is not None:
                 paths, cost = solution
                 if cost < min_cost:
                     min_cost = cost
                     min_solution = paths
+
+        # Go through leftover matches in the PQ
+        while len(match_pq) > 0:
+            next_matching = heappop(match_pq)
+
+            # Solve problem
+            id_solver = IDSolver(next_matching.grid, min_cost)
+            solution = id_solver.solve()
+            if solution is not None:
+                paths, cost = solution
+                if cost < min_cost:
+                    min_cost = cost
+                    min_solution = paths
+        return min_solution
+
+
+    def default_solve(self):
+        min_cost = float('inf')
+        min_solution = None
+
+        for match in self.matches:
+           # TODO: Calculate goal heuristic only once
+           grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
+           id_solver = IDSolver(grid, min_cost)
+           solution = id_solver.solve()
+           if solution is not None:
+               paths, cost = solution
+               if cost < min_cost:
+                   min_cost = cost
+                   min_solution = paths
         return min_solution
