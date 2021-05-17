@@ -13,13 +13,13 @@ class OperatorFinder:
 
     __slots__ = 'operators', 'target_sum', 'agent_operators', 'next_target_value', 'min_values', 'max_values'
 
-    def __init__(self, target_sum: int, agent_operators: List[List[Tuple[Direction, int]]]):
+    def __init__(self, target_sum: int, agent_operators: List[List[Tuple[List[Direction], int]]]):
         """
         Constructs an OperatorFinder instance
         :param target_sum:      Target value to reach
         :param agent_operators: List of operators with their delta value for each agent
         """
-        self.operators = []
+        self.operators: List[List[Direction]] = []
         self.target_sum = target_sum
         self.agent_operators = agent_operators
         self.next_target_value = float('inf')
@@ -35,7 +35,10 @@ class OperatorFinder:
         self.min_values.reverse()
         self.max_values.reverse()
 
-    def find_operators(self, current_agent: int, previous_operators, previous_sum) -> None:
+    def find_operators(self,
+                       current_agent: int,
+                       previous_operators: List[List[Direction]],
+                       previous_sum: int) -> None:
         """
         Finds all combinations of operators where the sum of delta values is equal to self.target_sum.
         Results are stored in self.operators

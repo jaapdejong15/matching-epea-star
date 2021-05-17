@@ -1,3 +1,4 @@
+import itertools
 from typing import List, Tuple, NewType, Dict
 
 from src.solver.agent import Agent
@@ -7,8 +8,32 @@ from src.solver.state import State
 from src.util.coordinate import Direction
 from src.util.grid import Grid
 
-OSFRow = NewType('OSFRow', Tuple[Direction, int])
+OSFRow = NewType('OSFRow', Tuple[List[Direction], int])
 OSFTable = NewType('OSFTable', List[OSFRow])
+
+
+def collapse_osf_table(table: List[Tuple[Direction, int]]) -> OSFTable:
+    """
+    Collapses directions with the same Δf value into the same row
+    :param table:   Table sorted on Δf value
+    :return:        Collapsed table sorted on Δf value
+    """
+    if len(table) == 0:
+        print("Empty table")
+        return OSFTable([])
+
+    osf_table = []
+    last_df = table[0][1]
+    last_directions: List[Direction] = [table[0][0]]
+    for direction, df in table[1:]:
+        if df == last_df:
+            last_directions.append(direction)
+        else:
+            osf_table.append(OSFRow((last_directions, last_df)))
+            last_directions = [direction]
+            last_df = df
+    osf_table.append(OSFRow((last_directions, last_df)))
+    return OSFTable(osf_table)
 
 
 class MAPFProblem:
@@ -124,7 +149,14 @@ class MAPFProblem:
         operator_finder = OperatorFinder(v, [self.osf[agent.color][agent.coord.y][agent.coord.x] for agent in
                                              parent.state.agents])
         operator_finder.find_operators(0, [], 0)
-        children = [self.get_child(parent, operator) for operator in operator_finder.operators]
+
+        expanded_operators = []
+        for operator in operator_finder.operators:
+            expanded_operators += list(itertools.product(*operator))
+
+
+
+        children = [self.get_child(parent, operator) for operator in expanded_operators]
         return children, operator_finder.next_target_value
 
     def calculate_single_color_osf(self, color: int) -> None:
@@ -159,16 +191,16 @@ class MAPFProblem:
         :param color:           color for the OSF
         :returns:               OSF table with Δf values for each move, sorted on Δf
         """
-        osf_table: List[OSFRow] = []
-        # TODO: Group entries with the same value in a single row -> Reduces branching factor in operator_finder
+        expanded_table = []
         for direction in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
             dx, dy = direction.value
             new_x: int = x + dx
             new_y: int = y + dy
             if self.grid.traversable_coords(new_x, new_y):
                 delta_f: int = 1 + self.grid.heuristic[color][new_y][new_x] - heuristic
-                osf_table.append(OSFRow((direction, delta_f)))
+                expanded_table.append((direction, delta_f))
 
-        osf_table.append(OSFRow((Direction.WAIT, 1)))
-        osf_table.sort(key=(lambda row: row[1]))
-        return OSFTable(osf_table)
+        expanded_table.append((Direction.WAIT, 1))
+        expanded_table.sort(key=(lambda row: row[1])) # Sorting is very important for the algorithm in operator_finder
+        return OSFTable(collapse_osf_table(expanded_table))
+
