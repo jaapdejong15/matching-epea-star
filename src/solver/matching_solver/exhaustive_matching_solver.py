@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import copy
 from heapq import heappush, heappop, heappushpop
+from random import shuffle
 from typing import List, Iterator
 
 from mapfmclient import Problem, MarkedLocation
@@ -71,8 +72,10 @@ class ExhaustiveMatchingSolver:
         self.independence_detection = independence_detection
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
         self.grid = Grid(original.width, original.height, original.grid, agents, original.goals)
-        self.matches: List[List[MarkedLocation]] = []
-        self.possible_matches([], 0)
+
+        if self.sorting:
+            self.matches: List[List[MarkedLocation]] = []
+            self.possible_matches([], 0)
 
         for agent in agents:
             agent.color = agent.identifier
@@ -109,6 +112,10 @@ class ExhaustiveMatchingSolver:
         Creates grids for a certain number of problems and solves the problems one by one to find the best solution
         :return:    A path for every agent
         """
+        # Shuffling makes sure that we have a representative sample of all matchings. Otherwise with a lot of samples
+        # and a limited PQ size, the matching of the first team will be the same in the entire PQ
+        if len(self.matches) > self.num_stored_problems:
+            shuffle(self.matches)
         match_iterator = iter(self.matches)
 
         min_cost = float('inf')
