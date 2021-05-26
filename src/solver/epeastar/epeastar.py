@@ -59,6 +59,7 @@ class EPEAStar:
             node = heappop(frontier)
             if node.value >= self.max_cost:
                 # Current solution will not improve existing solution
+                # TODO Don't add a node to frontier if max cost is exceeded
                 return None
 
             # Don't evaluate node if its state is already fully expanded

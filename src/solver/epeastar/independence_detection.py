@@ -86,7 +86,9 @@ class IDSolver:
             agent_path, cost = solution
             total_cost += cost
 
+
             # Return if max_value is exceeded
+            # TODO: Redundant
             if total_cost >= self.max_value:
                 return None
             groups.append(([agent], cost))

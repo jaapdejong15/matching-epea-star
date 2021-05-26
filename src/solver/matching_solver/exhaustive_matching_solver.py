@@ -73,9 +73,8 @@ class ExhaustiveMatchingSolver:
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
         self.grid = Grid(original.width, original.height, original.grid, agents, original.goals)
 
-        if self.sorting:
-            self.matches: List[List[MarkedLocation]] = []
-            self.possible_matches([], 0)
+        self.matches: List[List[MarkedLocation]] = []
+        self.possible_matches([], 0)
 
         for agent in agents:
             agent.color = agent.identifier
@@ -121,16 +120,8 @@ class ExhaustiveMatchingSolver:
         min_cost = float('inf')
         min_solution = None
 
-        match_pq = []
-
         # Fill the priority queue
-        for _ in range(self.num_stored_problems):
-            match = next(match_iterator, None)
-            if match is not None:
-                grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
-                heappush(match_pq, Matching(grid))
-            else:
-                break
+        match_pq = self.fill_pq(match_iterator)
 
         # Evaluate the best matchings while keeping the PQ filled
         for match in match_iterator:
