@@ -46,7 +46,7 @@ class MapParser:
             return Problem(grid, width, height, starts, goals)
 
     def parse_batch(self, folder: str) -> List[Problem]:
-        paths = os.listdir(os.path.join(self.root_folder, folder))
+        paths = os.listdir(f'{self.root_folder}/{folder}')
         problems = []
         for file in paths:
             problems.append(self.parse_map(f'{folder}/{file}'))

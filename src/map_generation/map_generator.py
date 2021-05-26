@@ -1,3 +1,4 @@
+import os
 import random
 from collections import deque
 from numbers import Number
@@ -147,6 +148,7 @@ def generate_maze(width: int, height: int, open_factor: float, max_neighbors: in
 
     frontier = [Coordinate(start_x, start_y)]
 
+    num_open = 1
     while frontier:
         pos = frontier.pop()
         for d in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
@@ -157,7 +159,7 @@ def generate_maze(width: int, height: int, open_factor: float, max_neighbors: in
 
                 # Check if not out of bounds and if not already opened
                 if 0 <= new_x < width and 0 <= new_y < height and grid[new_y][new_x] != 0:
-                    # Check number of open neighbors
+                    # Check number of EXS-open.txt neighbors
                     count = 0
                     for neighbor in [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]:
                         ndx, ndy = neighbor.value
@@ -167,11 +169,16 @@ def generate_maze(width: int, height: int, open_factor: float, max_neighbors: in
                             count += 1
                     if count <= max_neighbors:
                         grid[new_y][new_x] = 0
+                        num_open += 1
+
                         frontier.append(Coordinate(new_x, new_y))
+    print(f'Obstacle density: {num_open / (width * height)}')
     return grid
 
 
 def store_map(name: str, folder: str, problem: Problem):
+    if not os.path.exists(f'../../maps/{folder}'):
+        os.mkdir(f'../../maps/{folder}')
     with open(f'../../maps/{folder}/{name}.map', 'w') as f:
         f.write(f'width {problem.width}\n')
         f.write(f'height {problem.height}\n')
@@ -197,9 +204,9 @@ def generate_batch(name: str,
                    width: int,
                    height: int,
                    num_agents: List[int],
-                   open_factor: float = 0.75,
-                   max_neighbors: int = 1,
-                   min_goal_distance: float = 0.5,
+                   open_factor: float = 0.55,
+                   max_neighbors: int = 3,
+                   min_goal_distance: float = 0,
                    max_goal_distance: float = 1
                    ) -> None:
     for i in range(amount):
@@ -213,9 +220,10 @@ def generate_batch(name: str,
 
 
 if __name__ == '__main__':
-    generate_batch('test', 'test',
-                   amount=10,
-                   width=20,
-                   height=20,
-                   num_agents=[2, 3]  # Team of 2 agents and a team of 3 agents
-                   )
+    for i in range(1):
+        generate_batch(f'OBSTACLES-20x20-A{i}_T1', f'OBSTACLES-20x20-A{i}_T1',
+                       amount=50,
+                       width=20,
+                       height=20,
+                       num_agents=[i]
+                       )
