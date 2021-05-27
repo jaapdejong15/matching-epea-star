@@ -1,51 +1,13 @@
-from heapq import heappush, heappop
-from typing import List, Dict, Any
+from typing import List
 
-from mapfmclient import MarkedLocation
-
-from src.util.agent import Agent
 from src.util.coordinate import Coordinate
 from src.util.direction import Direction
-
-
-class BFSNode:
-    """
-    Node used for breadth-first search
-    """
-
-    __slots__ = 'pos', 'cost'
-
-    def __init__(self, pos: Coordinate, cost: int):
-        """
-        Constructs a BFSNode instance
-        :param pos:     Position coordinate
-        :param cost:    Cost of reaching the position
-        """
-        self.pos = pos
-        self.cost = cost
-
-    def __eq__(self, other):
-        """
-        Returns whether this node equals the other node
-        :param other:   Node to compare with
-        :return:        True if equal, False otherwise
-        """
-        return self.pos == other.pos and self.cost == other.cost
-
-    def __lt__(self, other):
-        """
-        Returns whether this node has a lower cost than the other node. This allows nodes to be sorted on cost.
-        :param other:   Other node
-        :return:        True if this node has a lower cost than the other node, False otherwise
-        """
-        return self.cost < other.cost
 
 
 class Grid:
     __slots__ = 'width', 'height', 'grid', 'agents', 'goals', 'colors', 'heuristic'
 
-    def __init__(self, width: int, height: int, grid: List[List[int]], agents: List[Agent],
-                 goals: List[MarkedLocation]):
+    def __init__(self, width: int, height: int, grid: List[List[int]]):
         """
         Constructs a Grid instance
         :param width:   Width of the 2d grid
@@ -57,53 +19,6 @@ class Grid:
         self.width = width
         self.height = height
         self.grid = grid
-        self.agents = agents
-        self.goals = goals
-        self.colors: Dict[int, List[MarkedLocation]] = dict()
-        self.__get_colors()
-        self.heuristic: Dict[int, List[List[Any]]] = {}
-        self.__compute_sic_heuristic()
-
-    def __compute_md_heuristic(self):
-        """
-        Computes the Manhattan Distance Heuristic for every color and location
-        """
-        for key in self.colors.keys():
-            color_heuristic = []
-            for y in range(self.height):
-                row = []
-                for x in range(self.width):
-                    h = float('inf')
-                    for goal in self.colors[key]:
-                        # Minimum manhattan distance
-                        h = min(h, abs(x - goal.x) + abs(y - goal.y))
-                    row.append(h)
-                color_heuristic.append(row)
-            self.heuristic[key] = color_heuristic
-
-    def __compute_sic_heuristic(self) -> None:
-        """
-        Computes the Sum of Individual Costs (SIC) heuristic
-        """
-        for color, goals in self.colors.items():
-            self.heuristic[color] = [[float('inf')] * self.width for _ in range(self.height)]
-            assert len(self.heuristic[color][0]) == self.width
-            assert len(self.heuristic[color]) == self.height
-
-            seen = set()
-            frontier: List[BFSNode] = []
-            for goal in goals:
-                heappush(frontier, BFSNode(Coordinate(goal.x, goal.y), 0))
-                seen.add(Coordinate(goal.x, goal.y))
-
-            while frontier:
-                node = heappop(frontier)
-                self.heuristic[color][node.pos.y][node.pos.x] = node.cost
-                neighbors = self.get_neighbors(node.pos)
-                for neighbor in neighbors:
-                    if neighbor not in seen:
-                        seen.add(neighbor)
-                        heappush(frontier, BFSNode(neighbor, node.cost + 1))
 
     def __is_wall(self, x: int, y: int) -> bool:
         """
@@ -143,17 +58,4 @@ class Grid:
             if self.traversable(neighbor):
                 neighbors.append(neighbor)
         return neighbors
-
-
-    def __get_colors(self) -> Dict[int, List[MarkedLocation]]:
-        """
-        Creates a dictionary with a list of goals for each color
-        :return: Dictionary with list of goals for each color
-        """
-        for goal in self.goals:
-            if self.colors.get(goal.color):
-                self.colors[goal.color].append(goal)
-            else:
-                self.colors[goal.color] = [goal]
-        return self.colors
 

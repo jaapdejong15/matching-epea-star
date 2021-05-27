@@ -1,6 +1,9 @@
 import itertools
 from typing import List, Tuple
 
+from mapfmclient import MarkedLocation
+
+from src.solver.epeastar.heuristic import Heuristic
 from src.solver.epeastar.operator_finder import OperatorFinder
 from src.solver.epeastar.osf import OSF
 from src.util.agent import Agent
@@ -12,13 +15,15 @@ from src.util.state import State
 
 class MAPFProblem:
 
-    def __init__(self, grid: Grid, osf: OSF):
+    def __init__(self, grid: Grid, goals: List[MarkedLocation], osf: OSF, heuristic: Heuristic):
         """
         Creates an instance of MAPFProblem.
         :param grid:    2d grid with starting locations and goals
         """
         self.osf = osf
-        self.grid = grid
+        self.grid = grid #TODO: Check if redundant
+        self.goals = goals
+        self.heuristic = heuristic
 
     def on_goal(self, agent: Agent) -> bool:
         """
@@ -26,7 +31,7 @@ class MAPFProblem:
         :param agent:   Agent to check if it is on its goal
         :returns:        True if the agent is on a goal, False otherwise
         """
-        for goal in self.grid.goals:
+        for goal in self.goals:
             if goal.x == agent.coord.x and goal.y == agent.coord.y and goal.color == agent.color:
                 return True
         return False
@@ -73,7 +78,7 @@ class MAPFProblem:
                 selected_children.append(child)
         return selected_children, next_value
 
-    def heuristic(self, state: State) -> int:
+    def get_heuristic(self, state: State) -> int:
         """
         Calculates the heuristic for the given state state
         :param state:   state to calculate the heuristic for
@@ -81,7 +86,7 @@ class MAPFProblem:
         """
         total = 0
         for agent in state.agents:
-            total += self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
+            total += self.heuristic.heuristic[agent.color][agent.coord.y][agent.coord.x]
         return total
 
     def get_child(self, parent: Node, operator: Tuple[Direction, ...]) -> Node:
@@ -108,7 +113,7 @@ class MAPFProblem:
                 Agent(agent.coord.move(operator[i]), agent.color, agent.identifier, waiting_cost=waiting_costs))
 
         child_state = State(agents)
-        return Node(child_state, costs, self.heuristic(child_state), parent=parent)
+        return Node(child_state, costs, self.get_heuristic(child_state), parent=parent)
 
     def get_children(self, parent: Node, v: int) -> Tuple[List[Node], int]:
         """

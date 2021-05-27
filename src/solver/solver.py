@@ -20,10 +20,13 @@ class Solver:
         :param algorithm:   Description of the algorithm that should be used to solve the problem
         """
         if algorithm.algorithm is Algorithm.ExhaustiveMatching:
-            self.solver = ExhaustiveMatchingSolver(problem)
+            self.solver = ExhaustiveMatchingSolver(problem, independence_detection=algorithm.id)
 
         elif algorithm.algorithm is Algorithm.ExhaustiveMatchingSorting:
-            self.solver = ExhaustiveMatchingSolver(problem, num_stored_problems=1000, sorting=True)
+            self.solver = ExhaustiveMatchingSolver(problem,
+                                                   num_stored_problems=1000,
+                                                   sorting=True,
+                                                   independence_detection=algorithm.id)
 
         elif algorithm.algorithm is Algorithm.HeuristicMatching:
             self.solver = HeuristicMatchingSolver(problem, independence_detection=algorithm.id)

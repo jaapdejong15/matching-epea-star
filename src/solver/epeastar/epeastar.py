@@ -4,8 +4,7 @@ from heapq import heappush, heappop
 from typing import List, Optional, Tuple
 
 from src.solver.epeastar.mapf_problem import MAPFProblem
-from src.solver.epeastar.osf import OSF
-from src.util.grid import Grid
+from src.util.agent import Agent
 from src.util.node import Node
 from src.util.path import Path
 from src.util.state import State
@@ -33,15 +32,16 @@ def convert_path(nodes: List[Node]) -> List[Path]:
 
 class EPEAStar:
 
-    def __init__(self, grid: Grid, osf: OSF, max_cost=float('inf')):
+    def __init__(self, problem: MAPFProblem, agents: List[Agent], max_cost=float('inf')):
         """
         Constructs an EPEAStar instance.
-        :param grid: The grid instance for the problem that will be solved.
-        :param max_cost: The maximum cost of the solution. Stop the solver if exceeded.
+        :param problem:     The MAPFProblem that should be solved
+        :param agents:      The moving agents
+        :param max_cost:    The maximum cost of the solution. Stop the solver if exceeded.
         """
-        self.problem = MAPFProblem(grid, osf)
-        initial_state = State(self.problem.grid.agents)
-        self.initial_node = Node(initial_state, len(self.problem.grid.agents), self.problem.heuristic(initial_state))
+        self.problem = problem
+        initial_state = State(agents)
+        self.initial_node = Node(initial_state, len(agents), self.problem.get_heuristic(initial_state))
         self.max_cost = max_cost
 
     def solve(self) -> Optional[Tuple[List[Path], int]]:

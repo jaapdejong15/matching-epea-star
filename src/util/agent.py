@@ -13,6 +13,9 @@ class Agent:
     def __eq__(self, other):
         return self.coord == other.coord and self.color == other.color
 
+    def __lt__(self, other):
+        return self.identifier < other.identifier
+
     def __hash__(self):
         return tuple.__hash__((self.coord, self.color))
 

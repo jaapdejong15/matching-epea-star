@@ -2,9 +2,8 @@ from copy import copy
 from typing import List, Tuple, Optional
 
 from src.solver.epeastar.epeastar import EPEAStar
-from src.solver.epeastar.osf import OSF
+from src.solver.epeastar.mapf_problem import MAPFProblem
 from src.util.agent import Agent
-from src.util.grid import Grid
 from src.util.path import Path
 
 
@@ -56,16 +55,17 @@ class IDSolver:
     First solve for all agents individually. If paths are conflicting, merge the agents and solve for the new group
     """
 
-    def __init__(self, original: Grid, osf: OSF, max_value=float('inf')):
+    def __init__(self, problem: MAPFProblem, agents: List[Agent], max_value=float('inf')):
         """
         Constructs an IDSolver instance
-        :param original:        Grid of the original problem
+        :param problem:         MAPF problem instance that needs to be solved
+        :param agents:          Agents that belong to the problem
         :param max_value:       Maximum allowed value of the solver. Stop the solver if the value is exceeded
         """
         self.paths = []
-        self.grid = original
+        self.problem = problem
+        self.agents = agents
         self.cost = 0
-        self.osf = osf
         self.max_value = max_value
 
     def solve(self) -> Optional[Tuple[list, int]]:
@@ -73,15 +73,15 @@ class IDSolver:
         Solves the original problem
         :return:    Solution with paths for every agent and the cost of the solution
         """
-        agents = copy(self.grid.agents)
+        agents = copy(self.agents)
         groups = []
 
         # Solve for every group
-        total_cost = sum(self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x] for agent in self.grid.agents)
+        total_cost = sum(self.problem.heuristic[agent.color][agent.coord.y][agent.coord.x] for agent in self.agents)
         for agent in agents:
-            self.grid.agents = [agent]
-            total_cost -= self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
-            solver = EPEAStar(self.grid, self.osf, self.max_value - total_cost)
+            self.agents = [agent]
+            total_cost -= self.problem.heuristic[agent.color][agent.coord.y][agent.coord.x]
+            solver = EPEAStar(self.problem, self.agents, self.max_value - total_cost)
             solution = solver.solve()
             if solution is None:
                 return None
@@ -134,8 +134,8 @@ class IDSolver:
         new_agents = group_a[0] + group_b[0]
 
         # Try to solve new group
-        self.grid.agents = new_agents
-        solver = EPEAStar(self.grid, self.osf, self.max_value - self.cost)
+        self.agents = new_agents
+        solver = EPEAStar(self.problem, self.agents, self.max_value - self.cost)
 
         solution = solver.solve()
         if solution is None:
