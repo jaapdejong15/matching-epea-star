@@ -3,7 +3,10 @@ from typing import Optional, List
 from mapfmclient import Problem
 
 from src.solver.epeastar.epeastar import EPEAStar
+from src.solver.epeastar.heuristic import Heuristic
 from src.solver.epeastar.independence_detection import IDSolver
+from src.solver.epeastar.mapf_problem import MAPFProblem
+from src.solver.epeastar.osf import OSF
 from src.util.agent import Agent
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid
@@ -26,11 +29,15 @@ class HeuristicMatchingSolver:
         self.problem = problem
         self.independence_detection = independence_detection
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(problem.starts)]
-        self.grid = Grid(problem.width, problem.height, problem.grid, agents, problem.goals)
+        self.grid = Grid(problem.width, problem.height, problem.grid)
+
+        heuristic = Heuristic(self.grid, problem.goals)
+        osf = OSF(heuristic, self.grid)
+        mapf_problem = MAPFProblem(self.grid, problem.goals, osf, heuristic)
         if self.independence_detection:
-            self.solver = IDSolver(self.grid)
+            self.solver = IDSolver(mapf_problem, agents)
         else:
-            self.solver = EPEAStar(self.grid)
+            self.solver = EPEAStar(mapf_problem, agents)
 
     def solve(self) -> Optional[List[Path]]:
         """
