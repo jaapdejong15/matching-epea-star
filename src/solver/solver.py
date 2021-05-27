@@ -23,7 +23,7 @@ class Solver:
             self.solver = ExhaustiveMatchingSolver(problem)
 
         elif algorithm.algorithm is Algorithm.ExhaustiveMatchingSorting:
-            self.solver = ExhaustiveMatchingSolver(problem, num_stored_problems=10000, sorting=True)
+            self.solver = ExhaustiveMatchingSolver(problem, num_stored_problems=1000, sorting=True)
 
         elif algorithm.algorithm is Algorithm.HeuristicMatching:
             self.solver = HeuristicMatchingSolver(problem, independence_detection=algorithm.id)

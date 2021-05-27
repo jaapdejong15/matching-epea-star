@@ -8,7 +8,6 @@ class OperatorFinder:
     """
     Implements a more efficient way of selecting operators. The speed of this algorithm is crucial for the performance of
     EPEA* since it is executed in every node.
-    TODO: Store max_values with node to avoid recalculating?
     """
 
     __slots__ = 'operators', 'target_sum', 'agent_operators', 'next_target_value', 'min_values', 'max_values'

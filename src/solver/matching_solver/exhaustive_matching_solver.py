@@ -9,6 +9,7 @@ from mapfmclient import Problem, MarkedLocation
 
 from src.solver.epeastar.epeastar import EPEAStar
 from src.solver.epeastar.independence_detection import IDSolver
+from src.solver.epeastar.osf import OSF
 from src.util.agent import Agent
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid
@@ -71,13 +72,17 @@ class ExhaustiveMatchingSolver:
         self.sorting = sorting
         self.independence_detection = independence_detection
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
-        self.grid = Grid(original.width, original.height, original.grid, agents, original.goals)
+
+        self.original_grid = Grid(original.width, original.height, original.grid, agents, original.goals)
 
         self.matches: List[List[MarkedLocation]] = []
         self.possible_matches([], 0)
 
-        for agent in agents:
-            agent.color = agent.identifier
+        agents = [Agent(Coordinate(s.x, s.y), i, i) for i, s in enumerate(original.starts)]
+        goals = [MarkedLocation(i, g.x, g.y) for i, g in enumerate(original.goals)]
+        self.grid = Grid(original.width, original.height, original.grid, agents, goals)
+
+        self.osf = OSF(self.grid)
 
     def possible_matches(self, previous_goals: List[MarkedLocation], current_agent: int) -> None:
         """
@@ -86,12 +91,12 @@ class ExhaustiveMatchingSolver:
         :param current_agent:   Current agent for this round of recursion
         :return:                Nothing
         """
-        for goal in self.grid.goals:
-            if goal.color == self.grid.agents[current_agent].color and not any(
+        for goal in self.original_grid.goals:
+            if goal.color == self.original_grid.agents[current_agent].color and not any(
                     filter(lambda g: g.x == goal.x and g.y == goal.y, previous_goals)):
                 current_goals = copy(previous_goals)
-                current_goals.append(MarkedLocation(self.grid.agents[current_agent].identifier, goal.x, goal.y))
-                if current_agent == len(self.grid.agents) - 1:
+                current_goals.append(MarkedLocation(self.original_grid.agents[current_agent].identifier, goal.x, goal.y))
+                if current_agent == len(self.original_grid.agents) - 1:
                     self.matches.append(current_goals)
                     continue
                 self.possible_matches(current_goals, current_agent + 1)
@@ -125,22 +130,26 @@ class ExhaustiveMatchingSolver:
 
         # Evaluate the best matchings while keeping the PQ filled
         for match in match_iterator:
-            grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
+            grid = copy(self.grid)
+            grid.goals = match
+            # grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
 
             # Retrieve best matching from PQ and add new matching
+            #TODO: Don't push on queue if initial heuristic is greater than best known cost
             next_matching = heappushpop(match_pq, Matching(grid))
 
             # If the initial heuristic is not able to improve the cost, the entire PQ will not be able to,
             # since this is the matching with the lowest initial heuristic in the PQ
-            if next_matching.initial_heuristic >= min_cost:
+            # Cost includes cost of starting position while heuristic does not, so we need to add the number of agents.
+            if next_matching.initial_heuristic + len(self.grid.agents) >= min_cost:
                 # Reset and fill match_pq:
                 match_pq = self.fill_pq(match_iterator)
 
             # Solve problem
             if self.independence_detection:
-                solver = IDSolver(next_matching.grid, min_cost)
+                solver = IDSolver(next_matching.grid, self.osf, min_cost)
             else:
-                solver = EPEAStar(next_matching.grid, min_cost)
+                solver = EPEAStar(next_matching.grid, self.osf, min_cost)
             solution = solver.solve()
             if solution is not None:
                 paths, cost = solution
@@ -154,17 +163,19 @@ class ExhaustiveMatchingSolver:
 
             # At this point all matches are in the PQ.
             # If the match with the best initial heuristic doesn't improve the cost then nothing will.
-            if next_matching.initial_heuristic >= min_cost:
+            if next_matching.initial_heuristic + len(self.grid.agents) >= min_cost:
+                print(f'cost={min_cost}')
                 return min_solution
 
             # Solve problem
-            id_solver = IDSolver(next_matching.grid, min_cost)
+            id_solver = IDSolver(next_matching.grid, self.osf, min_cost)
             solution = id_solver.solve()
             if solution is not None:
                 paths, cost = solution
                 if cost < min_cost:
                     min_cost = cost
                     min_solution = paths
+        print(f'cost={min_cost}')
         return min_solution
 
     def fill_pq(self, matching_iterator: Iterator[List[MarkedLocation]]):
@@ -196,9 +207,9 @@ class ExhaustiveMatchingSolver:
             grid = Grid(self.grid.width, self.grid.height, self.grid.grid, self.grid.agents, match)
 
             if self.independence_detection:
-                solver = IDSolver(grid, min_cost)
+                solver = IDSolver(grid, self.osf, min_cost)
             else:
-                solver = EPEAStar(grid, min_cost)
+                solver = EPEAStar(grid, self.osf, min_cost)
 
             solution = solver.solve()
 

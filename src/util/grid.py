@@ -59,7 +59,8 @@ class Grid:
         self.grid = grid
         self.agents = agents
         self.goals = goals
-        self.colors: Dict[int, List[MarkedLocation]] = self.__get_colors()
+        self.colors: Dict[int, List[MarkedLocation]] = dict()
+        self.__get_colors()
         self.heuristic: Dict[int, List[List[Any]]] = {}
         self.__compute_sic_heuristic()
 
@@ -143,15 +144,16 @@ class Grid:
                 neighbors.append(neighbor)
         return neighbors
 
+
     def __get_colors(self) -> Dict[int, List[MarkedLocation]]:
         """
         Creates a dictionary with a list of goals for each color
         :return: Dictionary with list of goals for each color
         """
-        colors = dict()
         for goal in self.goals:
-            if colors.get(goal.color):
-                colors[goal.color].append(goal)
+            if self.colors.get(goal.color):
+                self.colors[goal.color].append(goal)
             else:
-                colors[goal.color] = [goal]
-        return colors
+                self.colors[goal.color] = [goal]
+        return self.colors
+

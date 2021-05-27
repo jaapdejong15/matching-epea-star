@@ -2,6 +2,7 @@ from copy import copy
 from typing import List, Tuple, Optional
 
 from src.solver.epeastar.epeastar import EPEAStar
+from src.solver.epeastar.osf import OSF
 from src.util.agent import Agent
 from src.util.grid import Grid
 from src.util.path import Path
@@ -55,7 +56,7 @@ class IDSolver:
     First solve for all agents individually. If paths are conflicting, merge the agents and solve for the new group
     """
 
-    def __init__(self, original: Grid, max_value=float('inf')):
+    def __init__(self, original: Grid, osf: OSF, max_value=float('inf')):
         """
         Constructs an IDSolver instance
         :param original:        Grid of the original problem
@@ -64,6 +65,7 @@ class IDSolver:
         self.paths = []
         self.grid = original
         self.cost = 0
+        self.osf = osf
         self.max_value = max_value
 
     def solve(self) -> Optional[Tuple[list, int]]:
@@ -79,18 +81,13 @@ class IDSolver:
         for agent in agents:
             self.grid.agents = [agent]
             total_cost -= self.grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
-            solver = EPEAStar(self.grid, self.max_value - total_cost)
+            solver = EPEAStar(self.grid, self.osf, self.max_value - total_cost)
             solution = solver.solve()
             if solution is None:
                 return None
             agent_path, cost = solution
             total_cost += cost
 
-
-            # Return if max_value is exceeded
-            # TODO: Redundant
-            if total_cost >= self.max_value:
-                return None
             groups.append(([agent], cost))
 
             self.paths.append(agent_path[0])
@@ -138,7 +135,7 @@ class IDSolver:
 
         # Try to solve new group
         self.grid.agents = new_agents
-        solver = EPEAStar(self.grid, self.max_value - self.cost)
+        solver = EPEAStar(self.grid, self.osf, self.max_value - self.cost)
 
         solution = solver.solve()
         if solution is None:

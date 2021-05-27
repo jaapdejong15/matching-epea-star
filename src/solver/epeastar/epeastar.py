@@ -4,6 +4,7 @@ from heapq import heappush, heappop
 from typing import List, Optional, Tuple
 
 from src.solver.epeastar.mapf_problem import MAPFProblem
+from src.solver.epeastar.osf import OSF
 from src.util.grid import Grid
 from src.util.node import Node
 from src.util.path import Path
@@ -32,13 +33,13 @@ def convert_path(nodes: List[Node]) -> List[Path]:
 
 class EPEAStar:
 
-    def __init__(self, grid: Grid, max_cost=float('inf')):
+    def __init__(self, grid: Grid, osf: OSF, max_cost=float('inf')):
         """
         Constructs an EPEAStar instance.
         :param grid: The grid instance for the problem that will be solved.
         :param max_cost: The maximum cost of the solution. Stop the solver if exceeded.
         """
-        self.problem = MAPFProblem(grid)
+        self.problem = MAPFProblem(grid, osf)
         initial_state = State(self.problem.grid.agents)
         self.initial_node = Node(initial_state, len(self.problem.grid.agents), self.problem.heuristic(initial_state))
         self.max_cost = max_cost
@@ -59,7 +60,6 @@ class EPEAStar:
             node = heappop(frontier)
             if node.value >= self.max_cost:
                 # Current solution will not improve existing solution
-                # TODO Don't add a node to frontier if max cost is exceeded
                 return None
 
             # Don't evaluate node if its state is already fully expanded
@@ -82,7 +82,7 @@ class EPEAStar:
             # Check if the node can be expanded again
             if next_value == float('inf'):
                 fully_expanded.add(node.state)
-            else:
+            elif next_value < self.max_cost:
                 node.delta_f = next_value
                 node.value = node.cost + node.heuristic + node.delta_f
                 heappush(frontier, node)
