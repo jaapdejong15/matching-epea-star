@@ -1,5 +1,6 @@
+import sys
 from multiprocessing import Pool
-from time import process_time
+from time import process_time, time
 
 from typing import Optional
 
@@ -36,11 +37,12 @@ class BenchmarkQueue:
 
 class Dummy:
 
-    def __init__(self, time_out):
+    def __init__(self, time_out, end_time):
         self.timeout = time_out
+        self.end_time = end_time
 
     def __call__(self, object):
-        return object[0], test(object[1], self.timeout)
+        return object[0], test(object[1], self.timeout, self.end_time)
 
 
 class MapRunner:
@@ -63,12 +65,14 @@ class MapRunner:
         problems = self.map_parser.parse_batch(folder)
 
         with Pool(processes=processes) as p:
-            res = p.map(Dummy(time_out), problems)
+            res = p.map(Dummy(time_out, end_time), problems)
         print()
         return res
 
 
-def test(problem: Problem, time_out):
+def test(problem: Problem, time_out, end_time):
+    if time() > end_time:
+        raise Exception('Out of time!')
     start_time = process_time()
     solution = timeout(problem, time_out)
     print('.', end='')
@@ -81,7 +85,6 @@ def test(problem: Problem, time_out):
 def timeout(current_problem: Problem, time_out) -> Optional[Solution]:
     try:
         sol = func_timeout(time_out, solve, args=[current_problem])
-
     except FunctionTimedOut:
         sol = None
     except Exception as e:
@@ -97,8 +100,12 @@ def solve(starting_problem: Problem):
 
 
 if __name__ == "__main__":
-    processes = 4
-    map_root = "../maps"
+    start_time = time()
+    run_minutes = float(sys.argv[1])
+    end_time = time() + (run_minutes * 60)
+    processes = int(sys.argv[2])
+    map_root = "maps"
     queue = BenchmarkQueue("queue.txt")
     runner = MapRunner(map_root)
     runner.test_queue(30, queue, "results.txt")
+
