@@ -5,7 +5,7 @@ from heapq import heappush, heappop, heappushpop
 from random import shuffle
 from typing import List, Iterator
 
-from mapfmclient import Problem, MarkedLocation
+from mapfmclient import MarkedLocation
 
 from src.solver.epeastar.epeastar import EPEAStar
 from src.solver.epeastar.heuristic import Heuristic
@@ -15,6 +15,7 @@ from src.solver.epeastar.osf import OSF
 from src.util.agent import Agent
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid
+from src.util.group import Group
 from src.util.path import Path
 
 
@@ -60,7 +61,12 @@ class ExhaustiveMatchingSolver:
     """
 
     def __init__(self,
-                 original: Problem,
+                 grid: Grid,
+                 heuristic: Heuristic,
+                 osf: OSF,
+                 group: Group,
+                 starts: List[MarkedLocation],
+                 goals: List[MarkedLocation],
                  num_stored_problems: int = 0,
                  sorting: bool = False,
                  independence_detection: bool = True):
@@ -68,44 +74,41 @@ class ExhaustiveMatchingSolver:
         Constructs the ExhaustiveMatchingSolver object
         :param original:            Original problem that has to be solved.
         :param num_stored_problems: The amount of problems that should be stored at once.
+        TODO: Fix parameter descriptions
         """
         self.num_stored_problems = num_stored_problems
         self.sorting = sorting
         self.independence_detection = independence_detection
 
         # Convert starting positions to agents
-        self.colored_agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(original.starts)]
-        self.colored_goals = original.goals
-        self.goals = [MarkedLocation(i, g.x, g.y) for i, g in enumerate(original.goals)]
-
+        self.colored_agents = [Agent(Coordinate(starts[i].x, starts[i].y), starts[i].color, i) for i in group]
+        self.colored_goals = goals
+        self.goals = [MarkedLocation(i, g.x, g.y) for i, g in enumerate(goals)]
+        #self.goals = goals
         # Find all matches
         self.matches: List[List[Agent]] = []
         self.possible_matches([], 0)
 
-        grid = Grid(original.width, original.height, original.grid)
-        heuristic = Heuristic(grid, self.goals)
-        osf = OSF(heuristic, grid)
-
         self.problem = MAPFProblem(grid, self.goals, osf, heuristic)
 
-    def possible_matches(self, previous_agents: List[Agent], current_agent: int) -> None:
+    def possible_matches(self, previous_agents: List[Agent], current_goal: int) -> None:
         """
         Recursive function for finding all possible matches for agents and goals
         :param previous_agents:  Assigned agents for earlier recursions
-        :param current_agent:   Current agent for this round of recursion
+        :param current_goal:   Current agent for this round of recursion
         :return:                Nothing
         """
         for agent in self.colored_agents:
-            if agent.color == self.colored_goals[current_agent].color and not any(
+            if agent.color == self.colored_goals[current_goal].color and not any(
                     filter(lambda a: a.identifier == agent.identifier, previous_agents)):
                 current_agents = copy(previous_agents)
                 current_agents.append(Agent(copy(agent.coord),
-                                            self.goals[current_agent].color,
+                                            self.goals[current_goal].color,
                                             agent.identifier))
-                if current_agent == len(self.colored_agents) - 1:
+                if current_goal == len(self.colored_agents) - 1:
                     self.matches.append(sorted(current_agents))
                     continue
-                self.possible_matches(current_agents, current_agent + 1)
+                self.possible_matches(current_agents, current_goal + 1)
 
     def solve(self) -> List[Path]:
         """

@@ -7,6 +7,7 @@ class Algorithm(Enum):
     """
     ExhaustiveMatching = 'EPEA* (exhaustive matching)'
     ExhaustiveMatchingSorting = 'EPEA* (exhaustive matching with sorting)'
+    ExhaustiveMatchingSortingID = 'EPEA* (exhaustive matching with sorting and ID)'
     HeuristicMatching = 'EPEA* (heuristic matching)'
 
 

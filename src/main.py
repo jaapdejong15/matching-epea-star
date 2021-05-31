@@ -23,7 +23,7 @@ def get_version(is_debug, current_version) -> str:
 
 def run_online_benchmarker():
     version = '1.0.1'
-    debug = False
+    debug = True
     api_token = open('../apitoken.txt', 'r').read().strip()
     progressive_descriptor = ProgressiveDescriptor(
         min_agents=5,

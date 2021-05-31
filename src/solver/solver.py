@@ -3,8 +3,8 @@ from typing import List
 from mapfmclient import Problem
 
 from src.solver.algorithm_descriptor import Algorithm, AlgorithmDescriptor
-from src.solver.matching_solver.exhaustive_matching_solver import ExhaustiveMatchingSolver
 from src.solver.matching_solver.heuristic_matching_solver import HeuristicMatchingSolver
+from src.solver.matching_solver.matching_id_solver import MatchingIDSolver
 from src.util.path import Path
 
 
@@ -20,13 +20,21 @@ class Solver:
         :param algorithm:   Description of the algorithm that should be used to solve the problem
         """
         if algorithm.algorithm is Algorithm.ExhaustiveMatching:
-            self.solver = ExhaustiveMatchingSolver(problem, independence_detection=algorithm.id)
-
+            self.solver = MatchingIDSolver(problem,
+                                           sorting=False,
+                                           independence_detection=algorithm.id,
+                                           matching_id=False)
         elif algorithm.algorithm is Algorithm.ExhaustiveMatchingSorting:
-            self.solver = ExhaustiveMatchingSolver(problem,
-                                                   num_stored_problems=1000,
-                                                   sorting=True,
-                                                   independence_detection=algorithm.id)
+            self.solver = MatchingIDSolver(problem,
+                                           num_stored_problems=1000,
+                                           sorting=True,
+                                           independence_detection=algorithm.id,
+                                           matching_id=False)
+        elif algorithm.algorithm is Algorithm.ExhaustiveMatchingSortingID:
+            self.solver = MatchingIDSolver(problem, num_stored_problems=1000,
+                                           sorting=True,
+                                           independence_detection=algorithm.id,
+                                           matching_id=True)
 
         elif algorithm.algorithm is Algorithm.HeuristicMatching:
             self.solver = HeuristicMatchingSolver(problem, independence_detection=algorithm.id)

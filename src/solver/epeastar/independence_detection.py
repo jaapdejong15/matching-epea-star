@@ -7,35 +7,6 @@ from src.util.agent import Agent
 from src.util.path import Path
 
 
-def check_conflicts(path1: Path, path2: Path) -> bool:
-    """
-    Checks if two paths have either an edge conflict or a vertex conflict
-    :param path1:   The first path
-    :param path2:   The second path
-    :return:        True if paths are conflicting, False otherwise
-    """
-    n = len(path1)
-    m = len(path2)
-    i = 1
-    while i < n and i < m:
-        # Vertex conflict
-        if path1[i] == path2[i]:
-            return True
-        # Edge conflict
-        if path1[i] == path2[i - 1] and path1[i - 1] == path2[i]:
-            return True
-        i += 1
-    while i < n:
-        if path1[i] == path2[-1]:
-            return True
-        i += 1
-    while i < m:
-        if path1[-1] == path2[i]:
-            return True
-        i += 1
-    return False
-
-
 def find_conflict(paths: List[Path]) -> Optional[Tuple[int, int]]:
     """
     Checks if there are vertex and edge conflicts between paths
@@ -44,7 +15,7 @@ def find_conflict(paths: List[Path]) -> Optional[Tuple[int, int]]:
     """
     for i in range(len(paths)):
         for j in range(i + 1, len(paths)):
-            if check_conflicts(paths[i], paths[j]):
+            if paths[i].conflicts(paths[j]):
                 return paths[i].identifier, paths[j].identifier
     return None
 
