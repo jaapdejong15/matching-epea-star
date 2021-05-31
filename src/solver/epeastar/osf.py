@@ -16,7 +16,6 @@ class OSF:
         for color in heuristic.grouped_goals.keys():
             self.calculate_single_color_osf(color, grid, heuristic)
 
-
     def calculate_single_color_osf(self, color, grid, heuristic) -> None:
         """
         Precomputes the operator selection function (OSF) for individual agents.

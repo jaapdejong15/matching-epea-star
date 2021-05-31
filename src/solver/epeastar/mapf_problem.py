@@ -21,7 +21,7 @@ class MAPFProblem:
         :param grid:    2d grid with starting locations and goals
         """
         self.osf = osf
-        self.grid = grid #TODO: Check if redundant
+        self.grid = grid  # TODO: Check if redundant
         self.goals = goals
         self.heuristic = heuristic
 
@@ -122,7 +122,7 @@ class MAPFProblem:
         :param v:       The Δf value.
         :returns:       List of child nodes and next Δf value for the parent node
         """
-        #TODO: Don't push on queue if initial heuristic is greater than best known cost
+        # TODO: Don't push on queue if initial heuristic is greater than best known cost
         operator_finder = OperatorFinder(v, [self.osf.osf[agent.color][agent.coord.y][agent.coord.x] for agent in
                                              parent.state.agents])
         operator_finder.find_operators(0, [], 0)

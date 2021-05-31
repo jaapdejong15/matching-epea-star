@@ -14,10 +14,8 @@ class Heuristic:
         self.heuristic: Dict[int, List[List[Any]]] = {}
         self.__compute_sic_heuristic(grid)
 
-
     def __getitem__(self, item):
         return self.heuristic[item]
-
 
     def __compute_sic_heuristic(self, grid: Grid) -> None:
         """
@@ -52,7 +50,6 @@ class Heuristic:
             else:
                 grouped[goal.color] = [goal]
         return grouped
-
 
 
 class BFSNode:

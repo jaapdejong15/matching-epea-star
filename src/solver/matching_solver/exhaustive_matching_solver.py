@@ -26,6 +26,11 @@ class Matching:
     __slots__ = 'agents', 'initial_heuristic'
 
     def __init__(self, agents: List[Agent], initial_heuristic: int):
+        """
+        Creates a Matching instance
+        :param agents:              Agents with the agent color representing the matching
+        :param initial_heuristic:
+        """
         self.agents = agents
         self.initial_heuristic = initial_heuristic
 
@@ -61,7 +66,8 @@ class ExhaustiveMatchingSolver:
                  independence_detection: bool = True):
         """
         Constructs the ExhaustiveMatchingSolver object
-        :param original:    Original problem that has to be solved.
+        :param original:            Original problem that has to be solved.
+        :param num_stored_problems: The amount of problems that should be stored at once.
         """
         self.num_stored_problems = num_stored_problems
         self.sorting = sorting
@@ -131,8 +137,9 @@ class ExhaustiveMatchingSolver:
         # Evaluate the best matchings while keeping the PQ filled
         for match in match_iterator:
             # Retrieve best matching from PQ and add new matching
-            #TODO: Don't push on queue if initial heuristic is greater than best known cost
+            # TODO: Don't push on queue if initial heuristic is greater than best known cost
             next_matching = heappushpop(match_pq, Matching(match, self.get_initial_heuristic(match)))
+
 
             # If the initial heuristic is not able to improve the cost, the entire PQ will not be able to,
             # since this is the matching with the lowest initial heuristic in the PQ
@@ -159,7 +166,6 @@ class ExhaustiveMatchingSolver:
             # At this point all matches are in the PQ.
             # If the match with the best initial heuristic doesn't improve the cost then nothing will.
             if match.initial_heuristic >= min_cost:
-                print(f'cost={min_cost}')
                 return min_solution
 
             # Solve problem
@@ -173,7 +179,7 @@ class ExhaustiveMatchingSolver:
                 if cost < min_cost:
                     min_cost = cost
                     min_solution = paths
-        print(f'cost={min_cost}')
+
         return min_solution
 
     def fill_pq(self, matching_iterator: Iterator[List[Agent]]):

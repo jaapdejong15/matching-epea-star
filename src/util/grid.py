@@ -13,8 +13,6 @@ class Grid:
         :param width:   Width of the 2d grid
         :param height:  Height of the 2d grid
         :param grid:    2d int list that contains the grid. 1=wall, 0=open space
-        :param agents:  List of agents
-        :param goals:   List of goals
         """
         self.width = width
         self.height = height
@@ -58,4 +56,3 @@ class Grid:
             if self.traversable(neighbor):
                 neighbors.append(neighbor)
         return neighbors
-

@@ -30,7 +30,7 @@ def run_online_benchmarker():
         max_agents=5,
         num_teams=2
     )
-    algorithm_descriptor = AlgorithmDescriptor(Algorithm.HeuristicMatching,
+    algorithm_descriptor = AlgorithmDescriptor(Algorithm.ExhaustiveMatchingSorting,
                                                independence_detection=True)
     benchmarker = MapfBenchmarker(api_token, BenchmarkDescriptor(21), algorithm_descriptor.get_name(),
                                   get_version(debug, version), debug,
