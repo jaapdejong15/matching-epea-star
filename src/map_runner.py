@@ -1,8 +1,9 @@
-from time import process_time
 from multiprocessing import Pool
+from time import process_time
+
 from typing import Optional
 
-import numpy
+
 from func_timeout import func_timeout, FunctionTimedOut
 from mapfmclient import Problem, Solution
 
@@ -39,7 +40,7 @@ class Dummy:
         self.timeout = time_out
 
     def __call__(self, object):
-        return test(object, self.timeout)
+        return object[0], test(object[1], self.timeout)
 
 
 class MapRunner:
@@ -51,29 +52,20 @@ class MapRunner:
     def test_queue(self, time_out, benchmark_queue: BenchmarkQueue, output):
         task = benchmark_queue.get_next()
         while task is not None and task != "":
+            res = self.test_generated(time_out, task)
             with open(output, 'a') as f:
-                res, mean, std = self.test_generated(time_out, task)
-                f.write(f"{task}: Completed: {res}, Average Time: {mean}, Standard Deviation: {std}\n")
-                print(f"{task}: {res} with average {mean}s and deviaton: {std}\n")
+                for r in res:
+                    f.write(f"{task}, {r[0]}, {r[1]}\n")
                 benchmark_queue.completed()
                 task = benchmark_queue.get_next()
 
     def test_generated(self, time_out, folder):
         problems = self.map_parser.parse_batch(folder)
 
-        with Pool(processes=4) as p:
+        with Pool(processes=processes) as p:
             res = p.map(Dummy(time_out), problems)
         print()
-
-        solved = 0
-        times = []
-        for s, t in res:
-            solved += s
-            if t is not None:
-                times.append(t)
-        mean = numpy.mean(times)
-        std = numpy.std(times)
-        return solved/len(problems), round(mean, 3), round(std, 5)
+        return res
 
 
 def test(problem: Problem, time_out):
@@ -81,9 +73,9 @@ def test(problem: Problem, time_out):
     solution = timeout(problem, time_out)
     print('.', end='')
     if solution is not None:
-        return 1, (process_time() - start_time)
+        return process_time() - start_time
     else:
-        return 0, None
+        return None
 
 
 def timeout(current_problem: Problem, time_out) -> Optional[Solution]:
@@ -92,19 +84,20 @@ def timeout(current_problem: Problem, time_out) -> Optional[Solution]:
 
     except FunctionTimedOut:
         sol = None
-    #except Exception as e:
-    #    print(f"An error occurred while running: {e}")
-    #    return None
+    except Exception as e:
+        print(f"An error occurred while running: {e}")
+        return None
     return sol
 
 
 def solve(starting_problem: Problem):
     solver = Solver(starting_problem,
-                    AlgorithmDescriptor(Algorithm.HeuristicMatching, independence_detection=True))
+                    AlgorithmDescriptor(Algorithm.ExhaustiveMatchingSorting, independence_detection=True))
     return solver.solve()
 
 
 if __name__ == "__main__":
+    processes = 4
     map_root = "../maps"
     queue = BenchmarkQueue("queue.txt")
     runner = MapRunner(map_root)
