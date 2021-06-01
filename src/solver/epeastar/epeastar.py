@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 
 from src.solver.epeastar.mapf_problem import MAPFProblem
 from src.util.agent import Agent
+from src.util.cat import CAT
 from src.util.node import Node
 from src.util.path import Path
 from src.util.state import State
@@ -32,7 +33,7 @@ def convert_path(nodes: List[Node]) -> List[Path]:
 
 class EPEAStar:
 
-    def __init__(self, problem: MAPFProblem, agents: List[Agent], max_cost=float('inf')):
+    def __init__(self, problem: MAPFProblem, agents: List[Agent], cats: List[CAT], max_cost=float('inf')):
         """
         Constructs an EPEAStar instance.
         :param problem:     The MAPFProblem that should be solved
@@ -41,7 +42,8 @@ class EPEAStar:
         """
         self.problem = problem
         initial_state = State(agents)
-        self.initial_node = Node(initial_state, len(agents), self.problem.get_heuristic(initial_state))
+        self.cats = cats
+        self.initial_node = Node(initial_state, len(agents), self.problem.get_heuristic(initial_state), 0, 0)
         self.max_cost = max_cost
 
     def solve(self) -> Optional[Tuple[List[Path], int]]:
@@ -53,6 +55,8 @@ class EPEAStar:
         seen = set()  # Avoid re-adding states that already have been expanded at least once
         fully_expanded = set()  # Avoid evaluating states that have been fully expanded already
         heappush(frontier, self.initial_node)
+
+        ignored_paths = [agent.identifier for agent in self.initial_node.state.agents]
 
         nodes_expanded = 0
         loop_counter = 0
@@ -72,12 +76,20 @@ class EPEAStar:
                 return convert_path(get_path(node)), node.cost
 
             # Expand the current node
-            children, next_value = self.problem.expand(node)
+            child_states, next_value = self.problem.expand(node)
             nodes_expanded += 1
-            for child in children:
-                if child.state not in seen and child.state != node.state:
-                    seen.add(child.state)
-                    heappush(frontier, child)
+            for child_state, cost in child_states:
+                if child_state not in seen and child_state != node.state:
+                    # Create Node
+                    heuristic = self.problem.get_heuristic(child_state)
+                    time = node.time + 1
+                    collisions = 0
+                    for agent in child_state.agents:
+                        collisions += sum(cat.get_cat(ignored_paths, agent.coord, time) for cat in self.cats)
+                    child_node = Node(child_state, cost, heuristic, collisions, time, parent=node)
+
+                    seen.add(child_state)
+                    heappush(frontier, child_node)
 
             # Check if the node can be expanded again
             if next_value == float('inf'):

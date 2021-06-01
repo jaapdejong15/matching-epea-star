@@ -21,7 +21,6 @@ class MAPFProblem:
         :param grid:    2d grid with starting locations and goals
         """
         self.osf = osf
-        #self.grid = grid  # TODO: Check if redundant
         self.goals = goals
         self.heuristic = heuristic
 
@@ -44,7 +43,7 @@ class MAPFProblem:
         """
         return all(self.on_goal(agent) for agent in state.agents)
 
-    def expand(self, node: Node) -> Tuple[List[Node], int]:
+    def expand(self, node: Node) -> Tuple[List[Tuple[State, int]], int]:
         """
         Expands an A* search tree node.
         :param node:    parent node
@@ -55,11 +54,11 @@ class MAPFProblem:
 
         # Check constraints
         selected_children = []
-        for child in children:
+        for child_state, cost in children:
             coords = set()
             edge_conflict = False
             vertex_conflict = False
-            for i, agent in enumerate(child.state.agents):
+            for i, agent in enumerate(child_state.agents):
                 # Check vertex conflict
                 if agent.coord in coords:
                     vertex_conflict = True
@@ -68,14 +67,14 @@ class MAPFProblem:
 
                 # Check edge conflicts
                 for j in range(i + 1, len(node.state.agents)):
-                    if child.state.agents[i].coord == node.state.agents[j].coord and child.state.agents[j].coord == \
+                    if child_state.agents[i].coord == node.state.agents[j].coord and child_state.agents[j].coord == \
                             node.state.agents[i].coord:
                         edge_conflict = True
                         break
                 if edge_conflict:
                     break
             if not vertex_conflict and not edge_conflict:
-                selected_children.append(child)
+                selected_children.append((child_state, cost))
         return selected_children, next_value
 
     def get_heuristic(self, state: State) -> int:
@@ -89,7 +88,7 @@ class MAPFProblem:
             total += self.heuristic.heuristic[agent.color][agent.coord.y][agent.coord.x]
         return total
 
-    def get_child(self, parent: Node, operator: Tuple[Direction, ...]) -> Node:
+    def get_child(self, parent: Node, operator: Tuple[Direction, ...]) -> Tuple[State, int]:
         """
         Applies an operator to a parent node to create a child node
         :param parent:      The parent node
@@ -113,16 +112,15 @@ class MAPFProblem:
                 Agent(agent.coord.move(operator[i]), agent.color, agent.identifier, waiting_cost=waiting_costs))
 
         child_state = State(agents)
-        return Node(child_state, costs, self.get_heuristic(child_state), parent=parent)
+        return child_state, costs
 
-    def get_children(self, parent: Node, v: int) -> Tuple[List[Node], int]:
+    def get_children(self, parent: Node, v: int) -> Tuple[List[Tuple[State, int]], int]:
         """
         Uses the operator selection function (OSF) to get all relevant children from the parent node.
         :param parent:  Parent node
         :param v:       The Δf value.
-        :returns:       List of child nodes and next Δf value for the parent node
+        :returns:       List of child states together with their costs and next Δf value for the parent node
         """
-        # TODO: Don't push on queue if initial heuristic is greater than best known cost
         operator_finder = OperatorFinder(v, [self.osf.osf[agent.color][agent.coord.y][agent.coord.x] for agent in
                                              parent.state.agents])
         operator_finder.find_operators(0, [], 0)

@@ -8,9 +8,9 @@ class Node:
     A* tree search node
     """
 
-    __slots__ = 'state', 'cost', 'heuristic', 'value', 'delta_f', 'parent'
+    __slots__ = 'state', 'cost', 'heuristic', 'collisions', 'value', 'delta_f', 'parent', 'time'
 
-    def __init__(self, state: State, cost: int, heuristic: int, delta_f=0, parent=None):
+    def __init__(self, state: State, cost: int, heuristic: int, collisions: int, time: int, delta_f=0, parent=None):
         """
         Constructs a Node instance
         :param state:       The state that is associated with this node
@@ -22,7 +22,9 @@ class Node:
         self.state: State = state
         self.cost: int = cost
         self.heuristic: int = heuristic
+        self.collisions: int = collisions
         self.value: int = cost + heuristic  # F(n) - Stored value. Will be larger than cost + heuristic when the node is collapsed
+        self.time: int = time
         self.delta_f = delta_f
         self.parent: Node = parent
 
@@ -32,4 +34,4 @@ class Node:
         :param other:   Other node
         :returns:        True if the other node is less than this node, otherwise false
         """
-        return (self.value, self.heuristic) < (other.value, other.heuristic)
+        return (self.value, self.collisions, self.heuristic) < (other.value, other.collisions, other.heuristic)

@@ -195,9 +195,9 @@ class ExhaustiveMatchingSolver:
             agents.append(Agent(self.colored_agents[agent_id].coord, goal_id, agent_id))
 
         if self.independence_detection:
-            solver = IDSolver(self.problem, agents, min_cost)
+            solver = IDSolver(self.problem, agents, None, min_cost)
         else:
-            solver = EPEAStar(self.problem, agents, min_cost)
+            solver = EPEAStar(self.problem, agents, [], min_cost)
 
         return solver.solve()
 

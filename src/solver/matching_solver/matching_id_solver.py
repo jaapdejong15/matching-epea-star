@@ -5,6 +5,8 @@ from mapfmclient import Problem, MarkedLocation
 from src.solver.epeastar.heuristic import Heuristic
 from src.solver.epeastar.osf import OSF
 from src.solver.matching_solver.exhaustive_matching_solver import ExhaustiveMatchingSolver
+from src.util.agent import Agent
+from src.util.cat import CAT
 from src.util.grid import Grid
 from src.util.group import Group, Groups
 from src.util.path import Path
@@ -45,7 +47,7 @@ class MatchingIDSolver:
         for i, start in enumerate(self.starts):
             teams[start.color].append(i)
         teams = list(map(Group, filter(lambda x: len(x) > 0, teams)))
-        group_path_set = GroupPathSet(len(self.starts), self.grid.width, self.grid.height, teams, False)
+        group_path_set = GroupPathSet(self.grid.width, self.grid.height, list(range(len(self.starts))), teams, enable_cat=True)
 
         for group in group_path_set.groups:
             solver = self.create_solver(group)
@@ -82,35 +84,34 @@ class MatchingIDSolver:
 
 class GroupPathSet:
 
-    def __init__(self, n, w, h, teams: List[Group], enable_cat):
+    def __init__(self, w, h, agents: List[Agent], teams: List[Group], enable_cat):
         """
         Create a path set used to track the paths for MatchingID.
-        :param n: The number of paths
-        :param w: The width of the grid
-        :param h: The height of the grid
-        :param teams: The teams
-        :param enable_cat: If CAT should be used (NOT IMPLEMENTED YET)
+        :param w:           The width of the grid
+        :param h:           The height of the grid
+        :param teams:       The teams
+        :param enable_cat:  If CAT should be used (NOT IMPLEMENTED YET)
         """
         self.groups = Groups(teams)
         self.remove_one_groups()
-        self.paths: List[Optional[Path]] = [None for _ in range(n)]
-        #self.cat = CAT(n, w, h) if enable_cat else CAT.empty()
+        self.paths: List[Optional[Path]] = [None for _ in range(len(agents))]
+        self.cat = CAT(agents, w, h) if enable_cat else CAT.empty()
 
     def update(self, new_paths: Iterator[Path]):
         """
         Update the stored paths with the new paths.
-        :param new_paths: The new paths
+        :param new_paths:   The new paths
         """
         for path in new_paths:
             i = path.identifier
-            #self.cat.remove_cat(i, self.paths[i])
+            self.cat.remove_cat(self.paths[i])
             self.paths[i] = path
-            #self.cat.add_cat(i, path)
+            self.cat.add_cat(path)
 
     def find_conflict(self) -> Optional[Tuple[int, int]]:
         """
         Finds a conflict among the stored paths.
-        :return: The first found conflict.
+        :return:    The first found conflict.
         """
         for i in range(len(self.paths)):
             for j in range(i + 1, len(self.paths)):
