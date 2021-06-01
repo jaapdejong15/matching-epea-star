@@ -1,25 +1,19 @@
 from __future__ import annotations
 
-from src.util.grid import Grid
-
-
 class Matching:
     """
     Represents a matching. Contains a MAPF-grid and an initial heuristic
     """
 
-    __slots__ = 'grid', 'initial_heuristic'
+    __slots__ = 'initial_heuristic', 'agent_ids'
 
-    def __init__(self, grid: Grid):
+    def __init__(self, agent_ids, initial_heuristic):
         """
         Creates a matching from the grid
         :param grid:    Grid
         """
-        self.grid = grid
-        self.initial_heuristic = 0
-
-        for agent in self.grid.agents:
-            self.initial_heuristic += grid.heuristic[agent.color][agent.coord.y][agent.coord.x]
+        self.agent_ids = agent_ids
+        self.initial_heuristic = initial_heuristic
 
     def __lt__(self, other: Matching) -> bool:
         """

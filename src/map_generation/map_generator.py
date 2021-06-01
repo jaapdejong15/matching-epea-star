@@ -64,7 +64,7 @@ def generate_agent_positions(grid: List[List[int]],
     for x in range(sum(num_agents)):
         start_x = randint(0, width - 1)
         start_y = randint(0, height - 1)
-        while grid[start_y][start_x] != 0 and Coordinate(start_x, start_y) not in agent_positions:
+        while grid[start_y][start_x] != 0 or Coordinate(start_x, start_y) in agent_positions:
             start_x = randint(0, width - 1)
             start_y = randint(0, height - 1)
 

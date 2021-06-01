@@ -75,7 +75,7 @@ def test(problem: Problem, time_out, end_time):
         raise Exception('Out of time!')
     start_time = process_time()
     solution = timeout(problem, time_out)
-    print('.', end='')
+    print('.', end='', flush=True)
     if solution is not None:
         return process_time() - start_time
     else:

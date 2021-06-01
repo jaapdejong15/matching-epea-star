@@ -1,6 +1,6 @@
 from typing import List, Optional, Iterator, Tuple
 
-from mapfmclient import Problem
+from mapfmclient import Problem, MarkedLocation
 
 from src.solver.epeastar.heuristic import Heuristic
 from src.solver.epeastar.osf import OSF
@@ -25,7 +25,7 @@ class MatchingIDSolver:
         self.grid = Grid(problem.width, problem.height, problem.grid)
         self.starts = problem.starts
         self.goals = problem.goals
-        self.heuristic = Heuristic(self.grid, problem.goals)
+        self.heuristic = Heuristic(self.grid, [MarkedLocation(i, ml.x, ml.y) for i, ml in enumerate(problem.goals)])
         self.osf = OSF(self.heuristic, self.grid)
 
 

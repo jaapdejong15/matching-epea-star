@@ -43,6 +43,9 @@ class Path:
     def __len__(self):
         return len(self.path)
 
+    def __lt__(self, other: Path):
+        return self.identifier < other.identifier
+
     def conflicts(self, other: Path):
         """
         Checks if two paths have either an edge conflict or a vertex conflict
