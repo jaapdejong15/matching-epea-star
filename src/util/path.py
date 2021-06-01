@@ -72,3 +72,21 @@ class Path:
                 return True
             i += 1
         return False
+
+    def get_cost(self):
+        """
+        Calculates the individual cost of a path
+        The cost of staying on the goal at the end of the path is subtracted.
+        :return:    Cost
+        """
+        cost = len(self)
+        last = self[-1]
+        i = 2
+        if i > len(self):
+            return cost
+        while self[-i] == last:
+            cost -= 1
+            i += 1
+            if i > len(self):
+                break
+        return cost

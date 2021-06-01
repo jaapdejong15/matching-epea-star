@@ -46,7 +46,16 @@ class ExhaustiveMatchingSolver:
                  independence_detection: bool = True):
         """
         Constructs the ExhaustiveMatchingSolver object
-        TODO: Fix parameter descriptions
+        :param grid:                    The 2d grid on which the agents move
+        :param heuristic:               The heuristic values for each agent at each position in the grid
+        :param osf:                     The operator selection function
+        :param group:                   The group of agents for which the problem should be solved. Agents outside the group
+                                        will be ignored.
+        :param starts                   List of starting locations
+        :param goals                    List of goal locations
+        :param num_stored_problems      The amount of problems that should be sorted
+        :param sorting                  Whether goal assignments should be sorted on initial heuristic
+        :param independence_detection   Whether the MAPF solver should use independence detection (ID)
         """
         self.num_stored_problems = num_stored_problems
         self.sorting = sorting
@@ -56,7 +65,7 @@ class ExhaustiveMatchingSolver:
         self.colored_agents: List[Agent] = [Agent(Coordinate(starts[i].x, starts[i].y), starts[i].color, i) for i in group]
         self.colored_goals = goals
         self.goals = [MarkedLocation(i, g.x, g.y) for i, g in enumerate(goals)]
-        #self.goals = goals
+
         # Find all matches
         goal_ids = []
         # Find goal ids for every agent
@@ -68,7 +77,7 @@ class ExhaustiveMatchingSolver:
             # TODO: Sort by individual heuristic?
             goal_ids.append(ids)
 
-        self.matches: Iterator[Tuple[int, ...]] = filter(lambda x: len(set(x)) == len(self.colored_agents), itertools.product(*goal_ids))
+        self.goal_assignments: Iterator[Tuple[int, ...]] = filter(lambda x: len(set(x)) == len(self.colored_agents), itertools.product(*goal_ids))
 
         self.problem = MAPFProblem(grid, self.goals, osf, heuristic)
 
@@ -92,26 +101,29 @@ class ExhaustiveMatchingSolver:
         #if len(self.matches) > self.num_stored_problems:
         #    shuffle(self.matches)
 
+        # The lowest cost found so far. Also used as the maximum cost for different matchings
         min_cost = float('inf')
         min_solution = None
 
         # Fill the priority queue
-        match_pq = self.fill_pq(self.matches)
+        match_pq = self.fill_pq(self.goal_assignments, min_cost)
 
         # Evaluate the best matchings while keeping the PQ filled
-        for match in self.matches:
-            match: Tuple[int]
+        for goal_assignment in self.goal_assignments:
+            # Calculate a heuristic from a goal assignment and only continue if the heuristic can still improve the
+            # current best known cost
+            heuristic = self.get_initial_heuristic(goal_assignment)
+            if heuristic >= min_cost:
+                continue
 
             # Retrieve best matching from PQ and add new matching
-            # TODO: Don't push on queue if initial heuristic is greater than best known cost
-            next_matching = heappushpop(match_pq, Matching(match, self.get_initial_heuristic(match)))
-
+            next_matching = heappushpop(match_pq, Matching(goal_assignment, heuristic))
 
             # If the initial heuristic is not able to improve the cost, the entire PQ will not be able to,
             # since this is the matching with the lowest initial heuristic in the PQ
             if next_matching.initial_heuristic >= min_cost:
                 # Reset and fill match_pq:
-                match_pq = self.fill_pq(self.matches)
+                match_pq = self.fill_pq(self.goal_assignments, min_cost)
 
             solution = self.calculate_solution(next_matching.agent_ids, min_cost)
             if solution is not None:
@@ -138,17 +150,21 @@ class ExhaustiveMatchingSolver:
 
         return sorted(min_solution)
 
-    def fill_pq(self, matching_iterator):
+    def fill_pq(self, matching_iterator: Iterator[Tuple[int, ...]], max_heuristic):
         """
         Fills a priority queue with matchings
         :param matching_iterator:   Iterator for matchings
+        :param max_heuristic:       Maximum value of the initial heuristic
         :return:                    Heapified list of matchings, sorted on initial heuristic
         """
         match_pq = []
         for _ in range(self.num_stored_problems):
-            match = next(matching_iterator, None)
-            if match is not None:
-                heappush(match_pq, Matching(match, self.get_initial_heuristic(match)))
+            goal_assignment = next(matching_iterator, None)
+            if goal_assignment is not None:
+                heuristic = self.get_initial_heuristic(goal_assignment)
+                if heuristic >= max_heuristic:
+                    continue
+                heappush(match_pq, Matching(goal_assignment, self.get_initial_heuristic(goal_assignment)))
             else:
                 break
         return match_pq
@@ -161,7 +177,7 @@ class ExhaustiveMatchingSolver:
         min_cost = float('inf')
         min_solution = None
 
-        for match in self.matches:
+        for match in self.goal_assignments:
             solution = self.calculate_solution(match, min_cost)
 
             # If the solver did not terminate early, update minimum solution and cost
@@ -174,8 +190,9 @@ class ExhaustiveMatchingSolver:
 
     def calculate_solution(self, match: Tuple[int], min_cost: int) -> Optional[Tuple[List[Path], int]]:
         agents = []
-        for i, j in enumerate(match):
-            agents.append(Agent(self.colored_agents[j].coord, i, j))
+        for agent_id, goal_id in enumerate(match):
+            # Goal id is equal to the goal color in exhaustive matching
+            agents.append(Agent(self.colored_agents[agent_id].coord, goal_id, agent_id))
 
         if self.independence_detection:
             solver = IDSolver(self.problem, agents, min_cost)
@@ -186,7 +203,8 @@ class ExhaustiveMatchingSolver:
 
     def get_initial_heuristic(self, matching: Tuple[int]):
         res = 0
-        for i, j in enumerate(matching):
+        for agent_id, goal_id in enumerate(matching):
             # Include the cost of the starting position since that is also done in the real cost
-            res += 1 + self.problem.heuristic.heuristic[self.goals[i].color][self.colored_agents[j].coord.y][self.colored_agents[j].coord.x]
+            res += 1 + self.problem.heuristic.heuristic[self.goals[goal_id].color][
+                self.colored_agents[agent_id].coord.y][self.colored_agents[agent_id].coord.x]
         return res

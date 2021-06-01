@@ -47,7 +47,6 @@ class MatchingIDSolver:
         teams = list(map(Group, filter(lambda x: len(x) > 0, teams)))
         group_path_set = GroupPathSet(len(self.starts), self.grid.width, self.grid.height, teams, False)
 
-
         for group in group_path_set.groups:
             solver = self.create_solver(group)
             paths = solver.solve()
@@ -90,7 +89,7 @@ class GroupPathSet:
         :param w: The width of the grid
         :param h: The height of the grid
         :param teams: The teams
-        :param enable_cat: If CAT should be used
+        :param enable_cat: If CAT should be used (NOT IMPLEMENTED YET)
         """
         self.groups = Groups(teams)
         self.remove_one_groups()

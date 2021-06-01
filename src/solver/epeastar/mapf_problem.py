@@ -21,7 +21,7 @@ class MAPFProblem:
         :param grid:    2d grid with starting locations and goals
         """
         self.osf = osf
-        self.grid = grid  # TODO: Check if redundant
+        #self.grid = grid  # TODO: Check if redundant
         self.goals = goals
         self.heuristic = heuristic
 
