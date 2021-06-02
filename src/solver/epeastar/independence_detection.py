@@ -36,10 +36,8 @@ class IDSolver:
         :param cat:             Additional Collision Avoidance Table that should be used in calculating the result
         :param max_value:       Maximum allowed value of the solver. Stop the solver if the value is exceeded
         """
-        self.paths = []
         self.problem = problem
         self.agents = agents
-        self.cost = 0
         self.max_value = max_value
         self.path_set = PathSet(self.agents, self.problem.heuristic)
         self.cats = []
@@ -56,33 +54,29 @@ class IDSolver:
         groups = []
 
         # Solve for every group
-        total_cost = sum(self.problem.heuristic[agent.color][agent.coord.y][agent.coord.x] for agent in self.agents)
         for agent in agents:
             self.agents = [agent]
-            total_cost -= self.problem.heuristic[agent.color][agent.coord.y][agent.coord.x]
-            solver = EPEAStar(self.problem, self.agents, self.cats, max_cost=self.max_value - total_cost)
+            solver = EPEAStar(self.problem, self.agents, self.cats, max_cost=self.path_set.get_remaining_cost([agent.identifier], self.max_value))
             solution = solver.solve()
             if solution is None:
                 return None
             agent_paths, cost = solution
             self.path_set.update(agent_paths)
-            total_cost += cost
 
             groups.append(([agent], cost))
 
-            self.paths.append(agent_paths[0])
+            #self.paths.append(agent_paths[0])
 
-        self.cost = total_cost
 
         # Find and resolve conflicts until solution is conflict-free
-        conflict = find_conflict(self.paths)
+        conflict = self.path_set.find_conflict()
         while conflict is not None:
             a, b = conflict
             groups = self.merge_groups(groups, a, b, self.cats)
             if groups is None:
                 return None
-            conflict = find_conflict(self.paths)
-        return self.paths, self.cost
+            conflict = self.path_set.find_conflict()
+        return self.path_set.paths, sum(self.path_set.costs)
 
     def merge_groups(self,
                      groups: List[Tuple[List[Agent], int]],
@@ -112,14 +106,14 @@ class IDSolver:
         assert group_a is not None
         assert group_b is not None
 
-        self.cost -= group_a[1] + group_b[1]
+        #self.cost -= group_a[1] + group_b[1]
 
         # Combine groups a and b
         new_agents = group_a[0] + group_b[0]
 
         # Try to solve new group
         self.agents = new_agents
-        solver = EPEAStar(self.problem, self.agents, cats, self.max_value - self.cost)
+        solver = EPEAStar(self.problem, self.agents, cats, self.path_set.get_remaining_cost([agent.identifier for agent in new_agents], self.max_value))
 
         solution = solver.solve()
         if solution is None:
@@ -131,8 +125,5 @@ class IDSolver:
         groups[group_a_id] = (new_agents, cost)
         groups.remove(group_b)
 
-        self.cost += cost
-
-        for agent, path in zip(new_agents, group_paths):
-            self.paths[agent.identifier] = path
+        #self.cost += cost
         return groups

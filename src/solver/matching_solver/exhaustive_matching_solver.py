@@ -190,9 +190,9 @@ class ExhaustiveMatchingSolver:
 
     def calculate_solution(self, match: Tuple[int], min_cost: int) -> Optional[Tuple[List[Path], int]]:
         agents = []
-        for agent_id, goal_id in enumerate(match):
+        for agent, goal_id in zip(self.colored_agents, match):
             # Goal id is equal to the goal color in exhaustive matching
-            agents.append(Agent(self.colored_agents[agent_id].coord, goal_id, agent_id))
+            agents.append(Agent(agent.coord, goal_id, agent.identifier))
 
         if self.independence_detection:
             solver = IDSolver(self.problem, agents, None, min_cost)

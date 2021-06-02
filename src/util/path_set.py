@@ -19,8 +19,8 @@ class PathSet:
         self.agents = agents
         self.heuristic = heuristic
         self.mapping = dict((agent.identifier, i) for i, agent in enumerate(agents))
-        self.__paths: List[Optional[Path]] = [None for _ in range(len(agents))]
-        self.__costs: List[Optional[int]] = [None for _ in range(len(agents))]
+        self.paths: List[Optional[Path]] = [None for _ in range(len(agents))]
+        self.costs: List[Optional[int]] = [None for _ in range(len(agents))]
 
         # Create CAT with the same dimensions as the heuristic function
         width = len(heuristic.heuristic[agents[0].color][0])
@@ -35,10 +35,10 @@ class PathSet:
         """
         for path in new_paths:
             i = self.mapping[path.identifier]
-            self.cat.remove_cat(self.__paths[i])
-            self.__paths[i] = path
+            self.cat.remove_cat(self.paths[i])
+            self.paths[i] = path
             self.cat.add_cat(path)
-            self.__costs[i] = path.get_cost()
+            self.costs[i] = path.get_cost()
 
     def get_remaining_cost(self, indexes: List[int], max_cost) -> int:
         """
@@ -54,7 +54,7 @@ class PathSet:
         :param agent_id:    The id
         :return:            The cost
         """
-        return self.__costs[self.mapping[agent_id]] if self.__costs[self.mapping[agent_id]] is not None else self.get_heuristic(agent_id)
+        return self.costs[self.mapping[agent_id]] if self.costs[self.mapping[agent_id]] is not None else self.get_heuristic(agent_id)
 
     def get_heuristic(self, agent_id):
         """
@@ -77,7 +77,7 @@ class PathSet:
             for j in range(i + 1, len(self.agents)):
                 id_j = self.agents[j].identifier
                 path_index_j = self.mapping[id_j]
-                if self.__paths[path_index_i].conflicts(self.__paths[path_index_j]):
+                if self.paths[path_index_i].conflicts(self.paths[path_index_j]):
                     return id_i, id_j
         return None
 
@@ -87,4 +87,4 @@ class PathSet:
         :param agent_id:    The id to get the path for
         :return:            The path belonging to this id
         """
-        return self.__paths[self.mapping[agent_id]]
+        return self.paths[self.mapping[agent_id]]
