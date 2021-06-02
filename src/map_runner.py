@@ -54,6 +54,7 @@ class MapRunner:
     def test_queue(self, time_out, benchmark_queue: BenchmarkQueue, output):
         task = benchmark_queue.get_next()
         while task is not None and task != "":
+            print(task)
             res = self.test_generated(time_out, task)
             with open(output, 'a') as f:
                 for r in res:
@@ -107,5 +108,5 @@ if __name__ == "__main__":
     map_root = "maps"
     queue = BenchmarkQueue("queue.txt")
     runner = MapRunner(map_root)
-    runner.test_queue(30, queue, "results.txt")
+    runner.test_queue(120, queue, "results.txt")
 
