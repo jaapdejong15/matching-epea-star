@@ -35,9 +35,9 @@ class HeuristicMatchingSolver:
         osf = OSF(heuristic, self.grid)
         mapf_problem = MAPFProblem(self.grid, problem.goals, osf, heuristic)
         if self.independence_detection:
-            self.solver = IDSolver(mapf_problem, agents)
+            self.solver = IDSolver(mapf_problem, agents, None)
         else:
-            self.solver = EPEAStar(mapf_problem, agents)
+            self.solver = EPEAStar(mapf_problem, agents, [])
 
     def solve(self) -> Optional[List[Path]]:
         """
