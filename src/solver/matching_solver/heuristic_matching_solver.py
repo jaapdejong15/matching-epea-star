@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from mapfmclient import Problem
 
@@ -11,6 +11,7 @@ from src.util.agent import Agent
 from src.util.coordinate import Coordinate
 from src.util.grid import Grid
 from src.util.path import Path
+from src.util.statistic_tracker import StatisticTracker
 
 
 class HeuristicMatchingSolver:
@@ -26,6 +27,7 @@ class HeuristicMatchingSolver:
         :param problem:                The MAPFM problem that has to be solved
         :param independence_detection: Whether Independence Detection (ID) should be used
         """
+        self.stat_tracker = StatisticTracker()
         self.problem = problem
         self.independence_detection = independence_detection
         agents = [Agent(Coordinate(s.x, s.y), s.color, i) for i, s in enumerate(problem.starts)]
@@ -35,13 +37,13 @@ class HeuristicMatchingSolver:
         osf = OSF(heuristic, self.grid)
         mapf_problem = MAPFProblem(self.grid, problem.goals, osf, heuristic)
         if self.independence_detection:
-            self.solver = IDSolver(mapf_problem, agents, None)
+            self.solver = IDSolver(mapf_problem, agents, None, self.stat_tracker)
         else:
-            self.solver = EPEAStar(mapf_problem, agents, [])
+            self.solver = EPEAStar(mapf_problem, agents, [], self.stat_tracker)
 
-    def solve(self) -> Optional[List[Path]]:
+    def solve(self) -> Tuple[Optional[List[Path]], StatisticTracker]:
         """
         Solves the problem with which the solver instance was instantiated
         :return:    Solution if it was found
         """
-        return self.solver.solve()[0]
+        return self.solver.solve()[0], self.stat_tracker

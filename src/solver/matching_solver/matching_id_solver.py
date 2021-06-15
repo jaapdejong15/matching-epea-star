@@ -10,6 +10,7 @@ from src.util.cat import CAT
 from src.util.grid import Grid
 from src.util.group import Group, Groups
 from src.util.path import Path
+from src.util.statistic_tracker import StatisticTracker
 
 
 class MatchingIDSolver:
@@ -31,17 +32,19 @@ class MatchingIDSolver:
         self.osf = OSF(self.heuristic, self.grid)
 
 
-    def solve(self) -> Optional[List[Path]]:
+    def solve(self) -> Optional[Tuple[List[Path], StatisticTracker]]:
         if self.matching_id:
             return self.id_solve()
         else:
             return self.standard_solve()
 
-    def standard_solve(self) -> Optional[List[Path]]:
-        solver = self.create_solver(Group(list(range(len(self.starts)))))
-        return solver.solve()
+    def standard_solve(self) -> Optional[Tuple[List[Path], StatisticTracker]]:
+        stat_tracker = StatisticTracker()
+        solver = self.create_solver(Group(list(range(len(self.starts)))), stat_tracker)
+        return solver.solve(), stat_tracker
 
-    def id_solve(self) -> Optional[List[Path]]:
+    def id_solve(self) -> Optional[Tuple[List[Path], StatisticTracker]]:
+        stat_tracker = StatisticTracker()
         max_team = max(map(lambda x: x.color, self.starts))
         teams = [list() for _ in range(max_team + 1)]
         for i, start in enumerate(self.starts):
@@ -50,7 +53,7 @@ class MatchingIDSolver:
         group_path_set = GroupPathSet(self.grid.width, self.grid.height, list(range(len(self.starts))), teams, enable_cat=True)
 
         for group in group_path_set.groups:
-            solver = self.create_solver(group)
+            solver = self.create_solver(group, stat_tracker)
             paths = solver.solve()
             if paths is None:
                 return None
@@ -59,15 +62,15 @@ class MatchingIDSolver:
         while conflict is not None:
             a, b = conflict
             new_group = group_path_set.groups.combine_agents(a, b)
-            solver = self.create_solver(new_group)
+            solver = self.create_solver(new_group, stat_tracker)
             paths = solver.solve()
             if paths is None:
                 return None
             group_path_set.update(paths)
             conflict = group_path_set.find_conflict()
-        return group_path_set.paths
+        return group_path_set.paths, stat_tracker
 
-    def create_solver(self, group) -> ExhaustiveMatchingSolver:
+    def create_solver(self, group, stat_tracker) -> ExhaustiveMatchingSolver:
         return ExhaustiveMatchingSolver(
             self.grid,
             self.heuristic,
@@ -75,6 +78,7 @@ class MatchingIDSolver:
             group,
             self.starts,
             self.goals,
+            stat_tracker=stat_tracker,
             num_stored_problems=self.num_stored_problems,
             sorting=self.sorting,
             independence_detection=self.independence_detection

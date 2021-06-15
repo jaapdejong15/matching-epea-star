@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Optional
 
 from mapfmclient import Problem
 
@@ -6,6 +6,7 @@ from src.solver.algorithm_descriptor import Algorithm, AlgorithmDescriptor
 from src.solver.matching_solver.heuristic_matching_solver import HeuristicMatchingSolver
 from src.solver.matching_solver.matching_id_solver import MatchingIDSolver
 from src.util.path import Path
+from src.util.statistic_tracker import StatisticTracker
 
 
 class Solver:
@@ -31,7 +32,8 @@ class Solver:
                                            independence_detection=algorithm.id,
                                            matching_id=False)
         elif algorithm.algorithm is Algorithm.ExhaustiveMatchingSortingID:
-            self.solver = MatchingIDSolver(problem, num_stored_problems=10000000,
+            self.solver = MatchingIDSolver(problem,
+                                           num_stored_problems=10000000,
                                            sorting=True,
                                            independence_detection=algorithm.id,
                                            matching_id=True)
@@ -39,7 +41,7 @@ class Solver:
         elif algorithm.algorithm is Algorithm.HeuristicMatching:
             self.solver = HeuristicMatchingSolver(problem, independence_detection=algorithm.id)
 
-    def solve(self) -> List[Path]:
+    def solve(self) -> Tuple[Optional[List[Path]], StatisticTracker]:
         """
         Runs the algorithm to solve the MAPFM problem
         :return:    A path for every agent

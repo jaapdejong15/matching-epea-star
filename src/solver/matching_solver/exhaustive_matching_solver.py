@@ -17,6 +17,8 @@ from src.util.grid import Grid
 from src.util.group import Group
 from src.util.matching import Matching
 from src.util.path import Path
+from src.util.statistic_tracker import StatisticTracker
+
 
 class ExhaustiveMatchingSolver:
     """
@@ -41,6 +43,7 @@ class ExhaustiveMatchingSolver:
                  group: Group,
                  starts: List[MarkedLocation],
                  goals: List[MarkedLocation],
+                 stat_tracker: StatisticTracker,
                  num_stored_problems: int = 0,
                  sorting: bool = False,
                  independence_detection: bool = True):
@@ -60,6 +63,7 @@ class ExhaustiveMatchingSolver:
         self.num_stored_problems = num_stored_problems
         self.sorting = sorting
         self.independence_detection = independence_detection
+        self.stat_tracker = stat_tracker
 
         # Convert starting positions to agents
         self.colored_agents: List[Agent] = [Agent(Coordinate(starts[i].x, starts[i].y), starts[i].color, i) for i in group]
@@ -178,6 +182,9 @@ class ExhaustiveMatchingSolver:
         min_solution = None
 
         for match in self.goal_assignments:
+            if self.get_initial_heuristic(match) >= min_cost:
+                continue
+
             solution = self.calculate_solution(match, min_cost)
 
             # If the solver did not terminate early, update minimum solution and cost
@@ -194,10 +201,11 @@ class ExhaustiveMatchingSolver:
             # Goal id is equal to the goal color in exhaustive matching
             agents.append(Agent(agent.coord, goal_id, agent.identifier))
 
+        self.stat_tracker.assignment_evaluated()
         if self.independence_detection:
-            solver = IDSolver(self.problem, agents, None, min_cost)
+            solver = IDSolver(self.problem, agents, None, self.stat_tracker, min_cost)
         else:
-            solver = EPEAStar(self.problem, agents, [], min_cost)
+            solver = EPEAStar(self.problem, agents, [], self.stat_tracker, min_cost)
 
         return solver.solve()
 

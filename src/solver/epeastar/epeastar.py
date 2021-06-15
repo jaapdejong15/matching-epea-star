@@ -9,6 +9,7 @@ from src.util.cat import CAT
 from src.util.node import Node
 from src.util.path import Path
 from src.util.state import State
+from src.util.statistic_tracker import StatisticTracker
 
 
 def get_path(node: Node) -> List[Node]:
@@ -33,7 +34,12 @@ def convert_path(nodes: List[Node]) -> List[Path]:
 
 class EPEAStar:
 
-    def __init__(self, problem: MAPFProblem, agents: List[Agent], cats: List[CAT], max_cost=float('inf')):
+    def __init__(self,
+                 problem: MAPFProblem,
+                 agents: List[Agent],
+                 cats: List[CAT],
+                 stat_tracker: StatisticTracker,
+                 max_cost=float('inf')):
         """
         Constructs an EPEAStar instance.
         :param problem:     The MAPFProblem that should be solved
@@ -44,6 +50,7 @@ class EPEAStar:
         initial_state = State(agents)
         self.cats = cats
         self.initial_node = Node(initial_state, len(agents), self.problem.get_heuristic(initial_state), 0, 0)
+        self.stat_tracker = stat_tracker
         self.max_cost = max_cost
 
     def solve(self) -> Optional[Tuple[List[Path], int]]:

@@ -8,7 +8,8 @@ from src.solver.solver import Solver
 
 def solve(problem: Problem, algorithm: AlgorithmDescriptor) -> Solution:
     solver = Solver(problem, algorithm)
-    return Solution.from_paths(solver.solve())
+    solution, tracker = solver.solve()
+    return Solution.from_paths(solution)
 
 
 def get_version(is_debug, current_version) -> str:
@@ -27,9 +28,9 @@ def run_online_benchmarker():
         max_agents=20,
         num_teams=10
     )
-    algorithm_descriptor = AlgorithmDescriptor(Algorithm.HeuristicMatching,
+    algorithm_descriptor = AlgorithmDescriptor(Algorithm.ExhaustiveMatchingSortingID,
                                                independence_detection=True)
-    benchmarker = MapfBenchmarker(api_token, BenchmarkDescriptor(18), algorithm_descriptor.get_name(),
+    benchmarker = MapfBenchmarker(api_token, BenchmarkDescriptor(76), algorithm_descriptor.get_name(),
                                   get_version(debug, version), debug,
                                   solver=lambda problem: solve(problem, algorithm_descriptor),
                                   cores=1)

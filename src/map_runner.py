@@ -2,16 +2,16 @@ import sys
 from multiprocessing import Pool
 from time import process_time, time
 
-from typing import Optional
-
+from typing import Optional, Tuple, List
 
 from func_timeout import func_timeout, FunctionTimedOut
-from mapfmclient import Problem, Solution
+from mapfmclient import Problem
 
 from src.map_generation.map_parser import MapParser
 from src.solver.algorithm_descriptor import AlgorithmDescriptor, Algorithm
 from src.solver.solver import Solver
-
+from src.util.path import Path
+from src.util.statistic_tracker import StatisticTracker
 
 class BenchmarkQueue:
 
@@ -58,7 +58,10 @@ class MapRunner:
             res = self.test_generated(time_out, task)
             with open(output, 'a') as f:
                 for r in res:
-                    f.write(f"{task}, {r[0]}, {r[1]}\n")
+                    if r[1] is not None:
+                        f.write(f"{task}, {r[0]}, {r[1][0]}, {r[1][1]}\n")
+                    else:
+                        f.write(f'{task}, {r[0]}, {None}, {None}\n')
                 benchmark_queue.completed()
                 task = benchmark_queue.get_next()
 
@@ -78,25 +81,26 @@ def test(problem: Problem, time_out, end_time):
     solution = timeout(problem, time_out)
     print('.', end='', flush=True)
     if solution is not None:
-        return process_time() - start_time
+        _, stat_tracker = solution
+        return process_time() - start_time, stat_tracker.max_group_size
     else:
         return None
 
 
-def timeout(current_problem: Problem, time_out) -> Optional[Solution]:
+def timeout(current_problem: Problem, time_out) -> Optional[Tuple[List[Path], StatisticTracker]]:
     try:
-        sol = func_timeout(time_out, solve, args=[current_problem])
+        sol, stat_tracker = func_timeout(time_out, solve, args=[current_problem])
     except FunctionTimedOut:
-        sol = None
+        return None
     except Exception as e:
         print(f"An error occurred while running: {e}")
         return None
-    return sol
+    return sol, stat_tracker
 
 
-def solve(starting_problem: Problem):
+def solve(starting_problem: Problem) -> Tuple[Optional[List[Path]], StatisticTracker]:
     solver = Solver(starting_problem,
-                    AlgorithmDescriptor(Algorithm.ExhaustiveMatchingSorting, independence_detection=True))
+                    AlgorithmDescriptor(Algorithm.HeuristicMatching, independence_detection=True))
     return solver.solve()
 
 
