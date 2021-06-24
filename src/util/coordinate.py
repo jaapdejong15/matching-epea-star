@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-
-# from src.util.direction import Direction
+from src.util.direction import Direction
 
 
 class Coordinate:

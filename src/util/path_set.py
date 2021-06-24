@@ -2,12 +2,11 @@ from typing import List, Optional, Iterator, Tuple
 
 from src.solver.epeastar.heuristic import Heuristic
 from src.util.agent import Agent
-from src.util.path import Path
 from src.util.cat import CAT
+from src.util.path import Path
 
 
 class PathSet:
-
     __author__ = 'ivardb'
 
     def __init__(self, agents: List[Agent], heuristic: Heuristic):
@@ -46,7 +45,8 @@ class PathSet:
         :param indexes:         The ids that still need to be solved
         :param max_cost:        The maximum cost that can't be overridden
         """
-        return max_cost - sum(self.get_cost(agent.identifier) for agent in self.agents if agent.identifier not in indexes)
+        return max_cost - sum(
+            self.get_cost(agent.identifier) for agent in self.agents if agent.identifier not in indexes)
 
     def get_cost(self, agent_id):
         """
@@ -54,7 +54,9 @@ class PathSet:
         :param agent_id:    The id
         :return:            The cost
         """
-        return self.costs[self.mapping[agent_id]] if self.costs[self.mapping[agent_id]] is not None else self.get_heuristic(agent_id)
+        return self.costs[self.mapping[agent_id]] if self.costs[
+                                                         self.mapping[agent_id]] is not None else self.get_heuristic(
+            agent_id)
 
     def get_heuristic(self, agent_id):
         """

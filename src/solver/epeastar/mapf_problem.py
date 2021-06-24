@@ -5,22 +5,26 @@ from mapfmclient import MarkedLocation
 
 from src.solver.epeastar.heuristic import Heuristic
 from src.solver.epeastar.operator_finder import OperatorFinder
-from src.solver.epeastar.osf import OSF
+from src.solver.epeastar.pdb_generator import PDB
 from src.util.agent import Agent
 from src.util.direction import Direction
-from src.util.grid import Grid
 from src.util.node import Node
 from src.util.state import State
 
 
 class MAPFProblem:
+    """
+    Contains methods that are used by the EPEA* solver that are specific to the MAPF(M) problem.
+    """
 
-    def __init__(self, grid: Grid, goals: List[MarkedLocation], osf: OSF, heuristic: Heuristic):
+    def __init__(self, goals: List[MarkedLocation], pdb: PDB, heuristic: Heuristic):
         """
         Creates an instance of MAPFProblem.
-        :param grid:    2d grid with starting locations and goals
+        :param goals:       List of goals
+        :param pdb:         Precomputed pattern database
+        param heuristic:    Precomputed heuristic values
         """
-        self.osf = osf
+        self.osf = pdb
         self.goals = goals
         self.heuristic = heuristic
 
@@ -92,8 +96,8 @@ class MAPFProblem:
         """
         Applies an operator to a parent node to create a child node
         :param parent:      The parent node
-        :param operator:    Tuple of Directions of length #agents
-        :returns:           The child node
+        :param operator:    Tuple of Directions of length |agents|
+        :returns:           The child node with the additional cost
         """
         assert len(operator) == len(parent.state.agents)
 
@@ -121,7 +125,7 @@ class MAPFProblem:
         :param v:       The Δf value.
         :returns:       List of child states together with their costs and next Δf value for the parent node
         """
-        operator_finder = OperatorFinder(v, [self.osf.osf[agent.color][agent.coord.y][agent.coord.x] for agent in
+        operator_finder = OperatorFinder(v, [self.osf.pdb[agent.color][agent.coord.y][agent.coord.x] for agent in
                                              parent.state.agents])
         operator_finder.find_operators(0, [], 0)
 

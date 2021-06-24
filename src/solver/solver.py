@@ -27,13 +27,13 @@ class Solver:
                                            matching_id=False)
         elif algorithm.algorithm is Algorithm.ExhaustiveMatchingSorting:
             self.solver = MatchingIDSolver(problem,
-                                           num_stored_problems=10000000,
+                                           num_goal_assignments=10000000,
                                            sorting=True,
                                            independence_detection=algorithm.id,
                                            matching_id=False)
         elif algorithm.algorithm is Algorithm.ExhaustiveMatchingSortingID:
             self.solver = MatchingIDSolver(problem,
-                                           num_stored_problems=10000000,
+                                           num_goal_assignments=10000000,
                                            sorting=True,
                                            independence_detection=algorithm.id,
                                            matching_id=True)

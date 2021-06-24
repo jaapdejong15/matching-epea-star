@@ -53,6 +53,7 @@ class Group:
     def __iter__(self):
         return self.agent_ids.__iter__()
 
+
 class Groups:
 
     def __init__(self, groups):

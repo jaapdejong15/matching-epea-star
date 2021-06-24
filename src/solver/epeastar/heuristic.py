@@ -8,8 +8,16 @@ from src.util.grid import Grid
 
 
 class Heuristic:
+    """
+    Contains the precomputed heuristic function. Values are computed when instance is constructed.
+    """
 
     def __init__(self, grid: Grid, goals: List[MarkedLocation]):
+        """
+        Creates and calculates a precomputed Heuristic function
+        :param grid:    2D grid of the problem instance
+        :param goals:   List of goals
+        """
         self.grouped_goals = self.__group_by_color(goals)
         self.heuristic: Dict[int, List[List[Any]]] = {}
         self.__compute_sic_heuristic(grid)
@@ -19,7 +27,9 @@ class Heuristic:
 
     def __compute_sic_heuristic(self, grid: Grid) -> None:
         """
-        Computes the Sum of Individual Costs (SIC) heuristic
+        Computes the Sum of Individual Costs (SIC) heuristic for each color by performing a bread-first search from all
+        goals of the color.
+        :param grid:    2D grid of the problem instance
         """
         for color, goals in self.grouped_goals.items():
             self.heuristic[color] = [[float('inf')] * grid.width for _ in range(grid.height)]
@@ -43,7 +53,12 @@ class Heuristic:
 
     @staticmethod
     def __group_by_color(goals: List[MarkedLocation]) -> Dict[int, List[MarkedLocation]]:
-        grouped = {}
+        """
+        Groups all goals by color
+        :param goals:   List of goals
+        :return:        Dictionary with a list of goals for each color as key
+        """
+        grouped = dict()
         for goal in goals:
             if grouped.get(goal.color):
                 grouped[goal.color].append(goal)
@@ -54,7 +69,7 @@ class Heuristic:
 
 class BFSNode:
     """
-    Node used for breadth-first search
+    Node used for breadth-first search for precomputing the heuristic
     """
 
     __slots__ = 'pos', 'cost'

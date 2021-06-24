@@ -1,14 +1,14 @@
 from typing import List
 
-from src.util.path import Path
+from src.util.agent import Agent
 from src.util.coordinate import Coordinate
+from src.util.path import Path
 
 
 class CAT:
-
     __author__ = 'ivardb'
 
-    def __init__(self, agents, w, h, active=True):
+    def __init__(self, agents: List[Agent], w: int, h: int, active=True):
         """
         Create a Collision Avoidance Table.
         :param agents:  All possible agents
@@ -44,7 +44,7 @@ class CAT:
             self.cat[coord[1]][coord[0]].append((path.identifier, i))
         self.length[path.identifier] = len(path)
 
-    def get_cat(self, ignored_paths: List[int], coord: Coordinate, time) -> int:
+    def get_cat(self, ignored_paths: List[int], coord: Coordinate, time: int) -> int:
         """
         Gets the number of collisions at the coordinates.
         Ignores the ids in the ignored_paths

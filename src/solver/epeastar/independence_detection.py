@@ -28,7 +28,12 @@ class IDSolver:
     First solve for all agents individually. If paths are conflicting, merge the agents and solve for the new group
     """
 
-    def __init__(self, problem: MAPFProblem, agents: List[Agent], cat: Optional[CAT], stat_tracker, max_value=float('inf')):
+    def __init__(self,
+                 problem: MAPFProblem,
+                 agents: List[Agent],
+                 cat: Optional[CAT],
+                 stat_tracker,
+                 max_value=float('inf')):
         """
         Constructs an IDSolver instance
         :param problem:         MAPF problem instance that needs to be solved
@@ -58,7 +63,8 @@ class IDSolver:
         # Solve for every group
         for agent in agents:
             self.agents = [agent]
-            solver = EPEAStar(self.problem, self.agents, self.cats, self.stat_tracker, max_cost=self.path_set.get_remaining_cost([agent.identifier], self.max_value))
+            solver = EPEAStar(self.problem, self.agents, self.cats, self.stat_tracker,
+                              max_cost=self.path_set.get_remaining_cost([agent.identifier], self.max_value))
             solution = solver.solve()
             if solution is None:
                 return None
@@ -66,9 +72,6 @@ class IDSolver:
             self.path_set.update(agent_paths)
 
             groups.append(([agent], cost))
-
-            #self.paths.append(agent_paths[0])
-
 
         # Find and resolve conflicts until solution is conflict-free
         conflict = self.path_set.find_conflict()
@@ -108,8 +111,6 @@ class IDSolver:
         assert group_a is not None
         assert group_b is not None
 
-        #self.cost -= group_a[1] + group_b[1]
-
         # Combine groups a and b
         new_agents = group_a[0] + group_b[0]
 
@@ -117,7 +118,8 @@ class IDSolver:
 
         # Try to solve new group
         self.agents = new_agents
-        solver = EPEAStar(self.problem, self.agents, cats, self.stat_tracker, self.path_set.get_remaining_cost([agent.identifier for agent in new_agents], self.max_value))
+        solver = EPEAStar(self.problem, self.agents, cats, self.stat_tracker,
+                          self.path_set.get_remaining_cost([agent.identifier for agent in new_agents], self.max_value))
 
         solution = solver.solve()
         if solution is None:
@@ -129,5 +131,4 @@ class IDSolver:
         groups[group_a_id] = (new_agents, cost)
         groups.remove(group_b)
 
-        #self.cost += cost
         return groups

@@ -1,22 +1,24 @@
 from copy import copy
-from typing import List, Tuple
+from typing import List
 
+from src.solver.epeastar.pdb_generator import PDBTable
 from src.util.direction import Direction
 
 
 class OperatorFinder:
     """
-    Implements a more efficient way of selecting operators. The speed of this algorithm is crucial for the performance of
-    EPEA* since it is executed in every node.
+    Implements a more efficient way of selecting operators. The speed of this algorithm is crucial for the performance
+    of EPEA* since every node expansion an OperatorFinder is constructed and find_operators is executed.
+    find_operators .
     """
 
     __slots__ = 'operators', 'target_sum', 'agent_operators', 'next_target_value', 'min_values', 'max_values'
 
-    def __init__(self, target_sum: int, agent_operators: List[List[Tuple[List[Direction], int]]]):
+    def __init__(self, target_sum: int, agent_operators: List[PDBTable]):
         """
         Constructs an OperatorFinder instance
         :param target_sum:      Target value to reach
-        :param agent_operators: List of operators with their delta value for each agent
+        :param agent_operators: Pattern database table for each agent
         """
         self.operators: List[List[List[Direction]]] = []
         self.target_sum = target_sum

@@ -4,6 +4,10 @@ from src.util.agent import Agent
 
 
 class State:
+    """
+    A state in the MAPF(M) problem consists of the agent positions.
+    """
+
     __slots__ = 'agents'
 
     def __init__(self, agents: List[Agent]):

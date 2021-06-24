@@ -3,7 +3,7 @@ from typing import List, Optional, Iterator, Tuple
 from mapfmclient import Problem, MarkedLocation
 
 from src.solver.epeastar.heuristic import Heuristic
-from src.solver.epeastar.osf import OSF
+from src.solver.epeastar.pdb_generator import PDB
 from src.solver.matching_solver.exhaustive_matching_solver import ExhaustiveMatchingSolver
 from src.util.agent import Agent
 from src.util.cat import CAT
@@ -17,11 +17,20 @@ class MatchingIDSolver:
 
     def __init__(self,
                  problem: Problem,
-                 num_stored_problems: int = 0,
+                 num_goal_assignments: int = 10000000,
                  sorting: bool = False,
                  independence_detection: bool = True,
                  matching_id: bool = True):
-        self.num_stored_problems = num_stored_problems
+        """
+        Solves MAPFM problems
+        :param problem:                 The MAPFM problem to solve
+        :param num_goal_assignments:    The amount of goal assignments that should be stored at once
+        :param sorting:                 Indicates whether goal assignments should be evaluated in order of
+                                        initial heuristic
+        :param independence_detection:  Indicates whether EPEA* should use independence detection
+        :param matching_id:             Indicates whether exhaustive matching should use independence detection
+        """
+        self.num_stored_problems = num_goal_assignments
         self.sorting = sorting
         self.independence_detection = independence_detection
         self.matching_id = matching_id
@@ -29,28 +38,40 @@ class MatchingIDSolver:
         self.starts = problem.starts
         self.goals = problem.goals
         self.heuristic = Heuristic(self.grid, [MarkedLocation(i, ml.x, ml.y) for i, ml in enumerate(problem.goals)])
-        self.osf = OSF(self.heuristic, self.grid)
-
+        self.osf = PDB(self.heuristic, self.grid)
 
     def solve(self) -> Optional[Tuple[List[Path], StatisticTracker]]:
+        """
+        Solves the problem with which the solver was instantiated
+        :return:    List of paths in the solution and statistic tracker
+        """
         if self.matching_id:
             return self.id_solve()
         else:
             return self.standard_solve()
 
     def standard_solve(self) -> Optional[Tuple[List[Path], StatisticTracker]]:
+        """
+        Solves the problem without using matching independence detection.
+        :return:    List of paths in the solution and statistic tracker
+        """
         stat_tracker = StatisticTracker()
         solver = self.create_solver(Group(list(range(len(self.starts)))), stat_tracker)
         return solver.solve(), stat_tracker
 
     def id_solve(self) -> Optional[Tuple[List[Path], StatisticTracker]]:
+        """
+        Solves the problem using matching independence detection.
+        :return:    List of paths in the solution and statistic tracker
+        """
         stat_tracker = StatisticTracker()
         max_team = max(map(lambda x: x.color, self.starts))
         teams = [list() for _ in range(max_team + 1)]
         for i, start in enumerate(self.starts):
             teams[start.color].append(i)
         teams = list(map(Group, filter(lambda x: len(x) > 0, teams)))
-        group_path_set = GroupPathSet(self.grid.width, self.grid.height, list(range(len(self.starts))), teams, enable_cat=True)
+        group_path_set = GroupPathSet(self.grid.width, self.grid.height, list(range(len(self.starts))), teams,
+                                      enable_cat=True)
 
         for group in group_path_set.groups:
             solver = self.create_solver(group, stat_tracker)
@@ -71,6 +92,12 @@ class MatchingIDSolver:
         return group_path_set.paths, stat_tracker
 
     def create_solver(self, group, stat_tracker) -> ExhaustiveMatchingSolver:
+        """
+        Creates an exhaustive matching solver for each group.
+        :param group:           List of agents for which the solver needs to be made
+        :param stat_tracker:    Statistic tracker
+        :return:                Exhaustive matching solver
+        """
         return ExhaustiveMatchingSolver(
             self.grid,
             self.heuristic,
@@ -85,16 +112,15 @@ class MatchingIDSolver:
         )
 
 
-
 class GroupPathSet:
 
-    def __init__(self, w, h, agents: List[Agent], teams: List[Group], enable_cat):
+    def __init__(self, w: int, h: int, agents: List[Agent], teams: List[Group], enable_cat: bool):
         """
         Create a path set used to track the paths for MatchingID.
         :param w:           The width of the grid
         :param h:           The height of the grid
         :param teams:       The teams
-        :param enable_cat:  If CAT should be used (NOT IMPLEMENTED YET)
+        :param enable_cat:  If CAT should be used
         """
         self.groups = Groups(teams)
         self.remove_one_groups()

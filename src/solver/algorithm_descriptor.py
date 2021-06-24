@@ -20,7 +20,7 @@ class AlgorithmDescriptor:
         """
         Constructs an AlgorithmDescriptor instance
         :param algorithm:               The type of EPEA* algorithm
-        :param independence_detection:  When set to true, ID will be used
+        :param independence_detection:  When set to true, EPEA* will use ID
         """
         self.algorithm = algorithm
         self.id = independence_detection

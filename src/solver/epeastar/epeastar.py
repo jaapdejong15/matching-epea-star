@@ -13,6 +13,11 @@ from src.util.statistic_tracker import StatisticTracker
 
 
 def get_path(node: Node) -> List[Node]:
+    """
+    Creates a list of all parent nodes until the root from a single node.
+    :param node:    Child node
+    :return:        List of parent nodes, including the original child node
+    """
     path = []
     while node is not None:
         path.append(node)
@@ -22,6 +27,11 @@ def get_path(node: Node) -> List[Node]:
 
 
 def convert_path(nodes: List[Node]) -> List[Path]:
+    """
+    Converts a list of nodes into a list of agent paths
+    :param nodes:   List of nodes
+    :return:        List of paths
+    """
     paths = []
     for i, agent in enumerate(nodes[0].state.agents):
         path = []
@@ -44,6 +54,8 @@ class EPEAStar:
         Constructs an EPEAStar instance.
         :param problem:     The MAPFProblem that should be solved
         :param agents:      The moving agents
+        :param cats:        Collision avoidance tables
+        :param stat_tracker:Statistic tracker
         :param max_cost:    The maximum cost of the solution. Stop the solver if exceeded.
         """
         self.problem = problem

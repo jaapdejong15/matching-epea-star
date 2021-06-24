@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
+
 def check_conflicts(path1: Path, path2: Path) -> bool:
     """
     Checks if two paths have either an edge conflict or a vertex conflict
@@ -29,6 +30,7 @@ def check_conflicts(path1: Path, path2: Path) -> bool:
             return True
         i += 1
     return False
+
 
 class Path:
     __slots__ = 'path', 'identifier'
