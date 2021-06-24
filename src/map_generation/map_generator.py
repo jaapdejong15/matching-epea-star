@@ -33,7 +33,7 @@ def generate_map(width: int,
         for y in range(height):
             count_traversable += width - sum(grid[y])
         if count_traversable < (open_factor * width * height * 0.25 * max_neighbors) or num_3neighbors(grid) < sum(
-                num_agents) - 1:
+                num_agents):
             print("Not enough traversable cells or not solvable, running again!")
         else:
             starts, goals = generate_agent_positions(grid, width, height, num_agents, min_goal_distance,
