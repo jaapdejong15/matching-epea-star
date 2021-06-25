@@ -160,7 +160,7 @@ def compare_goal_assignments(data: Dict[str, Dict[int, List[int]]], title: str, 
         ax.plot(x, line, label=data_name, marker=marker, color=color)
 
     ax.legend()
-    ax.set_yrange([0, max_value])
+    ax.set_ylim([0, max_value])
     ax.set_ylabel('Goal assignments evaluated')
     ax.set_xlabel('Number of agents')
     ax.set_title(title)
@@ -240,7 +240,7 @@ def compare_percentage_solved(data: Dict[str, Dict[int, List[float]]], map_type:
         x_length = max(x_length, max(plot_data.keys()))
 
     ax.legend()
-    ax.set_ylim([0, 100]) if data_type == '% solved' else None
+    ax.set_ylim([0, 100])
     ax.set_ylabel('% solved')
     ax.set_xlim([1, x_length])
     ax.set_xticks(numpy.arange(0, x_length, 1))

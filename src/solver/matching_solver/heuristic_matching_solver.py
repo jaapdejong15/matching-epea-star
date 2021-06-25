@@ -35,7 +35,7 @@ class HeuristicMatchingSolver:
 
         heuristic = Heuristic(self.grid, problem.goals)
         osf = PDB(heuristic, self.grid)
-        mapf_problem = MAPFProblem(self.grid, problem.goals, osf, heuristic)
+        mapf_problem = MAPFProblem(problem.goals, osf, heuristic)
         if self.independence_detection:
             self.solver = IDSolver(mapf_problem, agents, None, self.stat_tracker)
         else:

@@ -86,7 +86,7 @@ class ExhaustiveMatchingSolver:
         self.goal_assignments: Iterator[Tuple[int, ...]] = filter(lambda x: len(set(x)) == len(self.colored_agents),
                                                                   itertools.product(*goal_ids))
 
-        self.problem = MAPFProblem(grid, self.goals, osf, heuristic)
+        self.problem = MAPFProblem(self.goals, osf, heuristic)
 
     def solve(self) -> List[Path]:
         """
