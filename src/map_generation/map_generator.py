@@ -79,9 +79,7 @@ def generate_agent_positions(grid: List[List[int]],
             distance = random.randint(int(m * min_distance), int(m * max_distance))
             for y, row in enumerate(distances):
                 for x, value in enumerate(row):
-                    if value == distance \
-                            and Coordinate(x, y) not in goal_positions \
-                            and Coordinate(x, y) not in agent_positions:
+                    if value == distance and Coordinate(x, y) not in goal_positions:
                         possible_locations.append(Coordinate(x, y))
         goal_positions.append(random.choice(possible_locations))
     return agent_positions, goal_positions
