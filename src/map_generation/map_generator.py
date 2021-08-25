@@ -64,7 +64,7 @@ def generate_agent_positions(grid: List[List[int]],
     for x in range(sum(num_agents)):
         start_x = randint(0, width - 1)
         start_y = randint(0, height - 1)
-        while grid[start_y][start_x] != 0 and Coordinate(start_x, start_y) not in agent_positions:
+        while grid[start_y][start_x] != 0 or Coordinate(start_x, start_y) in agent_positions:
             start_x = randint(0, width - 1)
             start_y = randint(0, height - 1)
 
@@ -204,8 +204,8 @@ def generate_batch(name: str,
                    width: int,
                    height: int,
                    num_agents: List[int],
-                   open_factor: float = 0.55,
-                   max_neighbors: int = 3,
+                   open_factor: float = 1,
+                   max_neighbors: int = 4,
                    min_goal_distance: float = 0,
                    max_goal_distance: float = 1
                    ) -> None:
@@ -220,10 +220,11 @@ def generate_batch(name: str,
 
 
 if __name__ == '__main__':
-    for i in range(1):
-        generate_batch(f'OBSTACLES-20x20-A{i}_T1', f'OBSTACLES-20x20-A{i}_T1',
-                       amount=50,
-                       width=20,
-                       height=20,
-                       num_agents=[i]
-                       )
+    generate_batch('test', 'test', amount=4, width=4, height=4, num_agents=[4])
+    # for i in range(1):
+    #     generate_batch(f'OBSTACLES-20x20-A{i}_T1', f'OBSTACLES-20x20-A{i}_T1',
+    #                    amount=50,
+    #                    width=20,
+    #                    height=20,
+    #                    num_agents=[i]
+    #                    )
